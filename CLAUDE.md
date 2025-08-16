@@ -59,10 +59,12 @@ Chatwoot is a Ruby on Rails application with a Vue.js frontend, following a stan
 
 ### Frontend Architecture (Vue.js)
 - **Dashboard App** (`app/javascript/dashboard/`): Main admin interface
-  - Vue 3 with Composition API and Options API
-  - Vuex for state management
+  - **Vue 3 with Composition API** (`<script setup>`) for modern components
+  - **Vue 2 Options API** for legacy components (being phased out)
+  - Vuex for state management with modern composables (`useStore`, `useStoreGetters`)
   - Vue Router for routing
-  - Component library in `components-next/` (newer design system)
+  - **`components-next/`**: Modern design system (preferred for new components)
+  - **`woot-*` components**: Legacy components (avoid for new features)
 - **Widget** (`app/javascript/widget/`): Customer-facing chat widget
 - **Portal** (`app/javascript/portal/`): Help center/knowledge base
 - **SDK** (`app/javascript/sdk/`): JavaScript SDK for integration
@@ -164,13 +166,22 @@ Provide a Kanban board where conversations are cards organized by pipeline stage
 - Test kanban at `/app/accounts/:id/kanban` after enabling feature for account
 
 ### Design System Requirements
-**IMPORTANT**: All new features MUST follow Chatwoot's design language:
+**IMPORTANT**: All new features MUST follow Chatwoot's modern architecture:
 
-1. **Use Chatwoot Components** (never raw HTML elements):
-   - `woot-button` instead of `<button>` or `class="button"`
-   - `woot-modal`, `woot-input`, `woot-switch` for forms
-   - `fluent-icon` for all icons
-   - `Thumbnail`, `TimeAgo`, `Spinner` for common UI elements
+1. **Use Modern Vue 3 Patterns**:
+   - **Composition API**: Use `<script setup>` for all new components
+   - **Store Composables**: Use `useStore()` and `useStoreGetters()` instead of `mapActions`/`mapGetters`
+   - **Modern Modals**: Use `v-model:show` syntax instead of `:show.sync`
+
+2. **Use Components-Next Design System** (preferred for new features):
+   - `Button` from `dashboard/components-next/button/Button.vue` instead of `woot-button`
+   - `SettingsLayout` + `BaseSettingsHeader` for settings pages
+   - `woot-confirm-delete-modal` for delete confirmations
+   - `fluent-icon` for all icons (or `i-lucide-*` icons in components-next)
+
+3. **Legacy Components** (avoid for new features, use only if necessary):
+   - `woot-button`, `woot-modal`, `woot-input`, `woot-switch`
+   - Use these only when components-next alternatives don't exist
 
 2. **Use CSS Variables** (never hardcoded values):
    - Colors: `--white`, `--s-200`, `--w-500`, `--color-body`, etc.
@@ -405,8 +416,16 @@ Provide a Kanban board where conversations are cards organized by pipeline stage
 - **Form Auto-Generation**: Watch field changes to auto-populate related fields for better UX
 - **Admin Navigation**: Configuration pages belong in Settings dropdown, not standalone menus
 
+### 4. Critical Architecture Discovery (2025-08-16 Session):
+- **Vue 3 Composition API**: Chatwoot's modern components use `<script setup>` pattern, NOT Options API
+- **Components-Next Design System**: Use `components-next/button/Button.vue` instead of `woot-button`
+- **Modern Layout Patterns**: Use `SettingsLayout` + `BaseSettingsHeader` for all settings pages
+- **Store Integration**: Use `useStore` + `useStoreGetters` composables instead of `mapActions`/`mapGetters`
+- **Modal Patterns**: Use `v-model:show` and `woot-confirm-delete-modal` for modern Vue 3 syntax
+
 ## Current Status:
-- ✅ **Phase 1 MVP**: Fully functional kanban board with drag-drop, stage management
-- ✅ **Super Admin**: Secure setup interface properly integrated into Settings menu  
-- ✅ **Design System**: Consistent Chatwoot styling applied throughout all components
-- ⏳ **Next Phase**: Ready for Phase 1.5 (automation triggers, real-time updates, advanced filters)
+- ✅ **Phase 1 MVP**: Core functionality implemented but with architectural mismatches
+- ⚠️ **Architecture Issue**: Kanban components use Vue 2 patterns while Chatwoot uses Vue 3
+- ⚠️ **Design System**: Using outdated `woot-*` components instead of modern `components-next`
+- 🔄 **Required**: Modernization to match Chatwoot's Vue 3 + Composition API standards
+- ⏳ **Next Phase**: Architectural alignment before Phase 1.5 features

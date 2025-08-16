@@ -10,8 +10,54 @@
     "COLUMN_EMPTY": "No conversations in this stage",
     "NO_SUBJECT": "No subject",
     "MOVE_ERROR": "Failed to move conversation",
+    "FILTERS": {
+      "STATUS": {
+        "LABEL": "Status",
+        "PLACEHOLDER": "Filter by status",
+        "OPEN": "Open",
+        "PENDING": "Pending", 
+        "RESOLVED": "Resolved"
+      },
+      "PRIORITY": {
+        "LABEL": "Priority",
+        "PLACEHOLDER": "Filter by priority",
+        "URGENT": "Urgent",
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low"
+      },
+      "CHANNELS": {
+        "LABEL": "Channels",
+        "PLACEHOLDER": "Filter by channel",
+        "WEB_WIDGET": "Website Chat",
+        "FACEBOOK": "Facebook",
+        "INSTAGRAM": "Instagram",
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "Email"
+      },
+      "ASSIGNEE": {
+        "LABEL": "Assignee",
+        "PLACEHOLDER": "Filter by agent",
+        "ALL": "All agents"
+      },
+      "SORT": {
+        "LAST_ACTIVITY": "Last Activity",
+        "CREATED_DATE": "Created Date",
+        "PRIORITY": "Priority"
+      },
+      "ACTIVE_COUNT": "{count} filters active",
+      "CLEAR_ALL": "Clear filters",
+      "TOTAL_CONVERSATIONS": "{count} conversations"
+    },
+    "CARD": {
+      "UNKNOWN_CONTACT": "Unknown Contact",
+      "UNASSIGNED": "Unassigned",
+      "QUICK_REPLY": "Quick Reply",
+      "ASSIGN": "Assign"
+    },
     "STAGE_MANAGER": {
       "TITLE": "Manage Kanban Stages",
+      "DESCRIPTION": "Configure workflow stages for your kanban board",
       "ADD_STAGE": "Add Stage",
       "EDIT_STAGE": "Edit Stage",
       "CREATE_STAGE": "Create Stage",
@@ -23,7 +69,7 @@
       "STAGE_KEY_PLACEHOLDER": "e.g., new, in_progress, done",
       "STAGE_COLOR": "Stage Color",
       "STAGE_ICON": "Stage Icon",
-      "STAGE_ICON_PLACEHOLDER": "e.g., flag, check-circle",
+      "STAGE_ICON_PLACEHOLDER": "Choose an icon for this stage",
       "DELETE_TITLE": "Delete Stage",
       "DELETE_MESSAGE": "Are you sure you want to delete the stage '%{name}'? It has %{count} conversations that will be moved to the default stage.",
       "NAME_REQUIRED": "Stage name is required",
@@ -42,7 +88,10 @@
       "UPDATE": "Update",
       "DELETE": "Delete",
       "KEY_READONLY": "Key cannot be changed after creation",
-      "KEY_AUTO_GENERATED": "Auto-generated from stage name"
+      "KEY_AUTO_GENERATED": "Auto-generated from stage name",
+      "LOADING": "Loading stages...",
+      "NO_STAGES": "No stages configured yet",
+      "MODAL_DESCRIPTION": "Configure workflow stages for your kanban board"
     }
   }
 }

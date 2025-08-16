@@ -1,5 +1,6 @@
 <template>
   <div 
+    ref="columnElement"
     class="kanban-column"
     :style="columnStyle"
     @dragover.prevent
@@ -8,13 +9,13 @@
     <div class="kanban-column__header">
       <div class="kanban-column__title">
         <span 
-          class="kanban-column__icon"
           v-if="stage.icon"
+          class="kanban-column__icon"
         >
           <fluent-icon :icon="stage.icon" size="16" />
         </span>
         <h3>{{ stage.name }}</h3>
-        <span class="kanban-column__count">{{ conversations.length }}</span>
+        <span class="kanban-column__count">{{ conversationCount }}</span>
       </div>
     </div>
     
@@ -47,125 +48,141 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import draggable from 'vuedraggable';
 import KanbanCard from './KanbanCard.vue';
 
-export default {
-  name: 'KanbanColumn',
-  components: {
-    draggable,
-    KanbanCard,
+const props = defineProps({
+  stage: {
+    type: Object,
+    required: true,
   },
-  props: {
-    stage: {
-      type: Object,
-      required: true,
-    },
-    conversations: {
-      type: Array,
-      default: () => [],
-    },
-    isMoving: {
-      type: Boolean,
-      default: false,
-    },
+  conversations: {
+    type: Array,
+    default: () => [],
   },
-  data() {
-    return {
-      localConversations: [...this.conversations],
-    };
+  isMoving: {
+    type: Boolean,
+    default: false,
   },
-  computed: {
-    columnStyle() {
-      return {
-        '--column-color': this.stage.color || '#94A3B8',
-      };
-    },
+  filters: {
+    type: Object,
+    default: () => ({}),
   },
-  watch: {
-    conversations(newVal) {
-      this.localConversations = [...newVal];
-    },
+});
+
+const emit = defineEmits(['drop']);
+const { t } = useI18n();
+
+// Local state
+const localConversations = ref([...props.conversations]);
+const columnElement = ref(null);
+
+// Dynamic column styling with user-chosen colors
+const columnStyle = computed(() => {
+  const baseColor = props.stage.color || '#94A3B8';
+  return {
+    '--column-color': baseColor,
+    '--column-header-bg': `${baseColor}10`, // 10% opacity
+    '--column-border': `${baseColor}30`,     // 30% opacity
+    '--column-accent': `${baseColor}20`,     // 20% opacity for subtle highlights
+  };
+});
+
+// Enhanced conversation count with filter info
+const conversationCount = computed(() => {
+  const total = props.conversations.length;
+  const filtered = localConversations.value.length;
+  return total === filtered ? total : `${filtered}/${total}`;
+});
+
+// Watch for conversation changes
+watch(
+  () => props.conversations,
+  (newVal) => {
+    localConversations.value = [...newVal];
   },
-  methods: {
-    handleDrop(event) {
-      event.preventDefault();
-      const conversationId = event.dataTransfer.getData('conversationId');
-      const fromStage = event.dataTransfer.getData('fromStage');
-      
-      if (fromStage !== this.stage.key) {
-        this.$emit('drop', {
-          conversationId: parseInt(conversationId, 10),
-          fromStage,
-          toStage: this.stage.key,
-          position: this.calculateDropPosition(event),
-        });
-      }
-    },
+  { deep: true }
+);
+
+// Drag and drop handlers
+const handleDrop = (event) => {
+  event.preventDefault();
+  const conversationId = event.dataTransfer.getData('conversationId');
+  const fromStage = event.dataTransfer.getData('fromStage');
+  
+  if (fromStage !== props.stage.key) {
+    emit('drop', {
+      conversationId: parseInt(conversationId, 10),
+      fromStage,
+      toStage: props.stage.key,
+      position: calculateDropPosition(event),
+    });
+  }
+};
+
+const handleChange = (event) => {
+  if (event.added) {
+    const { element, newIndex } = event.added;
+    const position = calculatePosition(newIndex);
     
-    handleChange(event) {
-      if (event.added) {
-        const { element, newIndex } = event.added;
-        const position = this.calculatePosition(newIndex);
-        
-        this.$emit('drop', {
-          conversationId: element.id,
-          fromStage: null,
-          toStage: this.stage.key,
-          position,
-        });
-      } else if (event.moved) {
-        const { element, newIndex } = event.moved;
-        const position = this.calculatePosition(newIndex);
-        
-        this.$emit('drop', {
-          conversationId: element.id,
-          fromStage: this.stage.key,
-          toStage: this.stage.key,
-          position,
-        });
-      }
-    },
+    emit('drop', {
+      conversationId: element.id,
+      fromStage: null,
+      toStage: props.stage.key,
+      position,
+    });
+  } else if (event.moved) {
+    const { element, newIndex } = event.moved;
+    const position = calculatePosition(newIndex);
     
-    calculatePosition(index) {
-      const position = {};
-      
-      if (index === 0 && this.localConversations.length > 1) {
-        position.beforeId = this.localConversations[1].id;
-      } else if (index === this.localConversations.length - 1 && index > 0) {
-        position.afterId = this.localConversations[index - 1].id;
-      } else if (index > 0 && index < this.localConversations.length - 1) {
-        position.afterId = this.localConversations[index - 1].id;
-        position.beforeId = this.localConversations[index + 1].id;
+    emit('drop', {
+      conversationId: element.id,
+      fromStage: props.stage.key,
+      toStage: props.stage.key,
+      position,
+    });
+  }
+};
+
+// Position calculation helpers
+const calculatePosition = (index) => {
+  const position = {};
+  
+  if (index === 0 && localConversations.value.length > 1) {
+    position.beforeId = localConversations.value[1].id;
+  } else if (index === localConversations.value.length - 1 && index > 0) {
+    position.afterId = localConversations.value[index - 1].id;
+  } else if (index > 0 && index < localConversations.value.length - 1) {
+    position.afterId = localConversations.value[index - 1].id;
+    position.beforeId = localConversations.value[index + 1].id;
+  }
+  
+  return position;
+};
+
+const calculateDropPosition = (event) => {
+  const cards = columnElement.value?.querySelectorAll('.kanban-card') || [];
+  let afterId = null;
+  let beforeId = null;
+  
+  cards.forEach((card, index) => {
+    const rect = card.getBoundingClientRect();
+    if (event.clientY < rect.top + rect.height / 2) {
+      if (index === 0) {
+        beforeId = parseInt(card.dataset.conversationId, 10);
       }
-      
-      return position;
-    },
-    
-    calculateDropPosition(event) {
-      // Calculate position based on drop coordinates
-      const cards = this.$el.querySelectorAll('.kanban-card');
-      let afterId = null;
-      let beforeId = null;
-      
-      cards.forEach((card, index) => {
-        const rect = card.getBoundingClientRect();
-        if (event.clientY < rect.top + rect.height / 2) {
-          if (index === 0) {
-            beforeId = parseInt(card.dataset.conversationId, 10);
-          }
-        } else {
-          afterId = parseInt(card.dataset.conversationId, 10);
-          if (cards[index + 1]) {
-            beforeId = parseInt(cards[index + 1].dataset.conversationId, 10);
-          }
-        }
-      });
-      
-      return { afterId, beforeId };
-    },
-  },
+    } else {
+      afterId = parseInt(card.dataset.conversationId, 10);
+      if (cards[index + 1]) {
+        beforeId = parseInt(cards[index + 1].dataset.conversationId, 10);
+      }
+    }
+  });
+  
+  return { afterId, beforeId };
 };
 </script>
 
@@ -173,16 +190,33 @@ export default {
 .kanban-column {
   display: flex;
   flex-direction: column;
-  width: 320px;
-  min-width: 320px;
-  height: 100%;
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+  height: calc(100vh - 160px);
   background-color: var(--white);
-  border-radius: var(--border-radius-large);
-  box-shadow: var(--shadow-small);
+  border-radius: var(--border-radius-normal);
+  border: 1px solid var(--s-100);
+  box-shadow: var(--shadow-medium);
   
   &__header {
-    padding: var(--space-normal);
-    border-bottom: 2px solid var(--column-color);
+    padding: var(--space-large);
+    background: linear-gradient(135deg, var(--column-header-bg) 0%, var(--white) 100%);
+    border-bottom: 1px solid var(--column-border);
+    border-radius: var(--border-radius-normal) var(--border-radius-normal) 0 0;
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--column-color) 0%, var(--column-color) 100%);
+      border-radius: var(--border-radius-normal) var(--border-radius-normal) 0 0;
+      box-shadow: 0 1px 3px var(--column-border);
+    }
   }
   
   &__title {
@@ -193,9 +227,10 @@ export default {
     h3 {
       flex: 1;
       margin: 0;
-      font-size: var(--font-size-default);
+      font-size: var(--font-size-large);
       font-weight: var(--font-weight-bold);
       color: var(--s-900);
+      letter-spacing: -0.01em;
     }
   }
   
@@ -212,40 +247,47 @@ export default {
   }
   
   &__count {
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: var(--border-radius-full);
-    background-color: var(--s-100);
-    color: var(--s-700);
-    font-size: var(--font-size-mini);
-    font-weight: var(--font-weight-medium);
+    background-color: var(--s-200);
+    color: var(--s-800);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-bold);
+    min-width: 28px;
+    text-align: center;
   }
   
   &__body {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-small);
+    padding: var(--space-normal);
+    background-color: var(--s-25);
   }
   
   &__empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100px;
+    height: 120px;
     border: 2px dashed var(--s-200);
     border-radius: var(--border-radius-normal);
+    background-color: var(--white);
+    margin: var(--space-small) 0;
     
     p {
       margin: 0;
       color: var(--s-500);
       font-size: var(--font-size-small);
+      font-weight: var(--font-weight-medium);
     }
   }
   
   &__cards {
     display: flex;
     flex-direction: column;
-    gap: var(--space-small);
-    min-height: 100px;
+    gap: var(--space-normal);
+    min-height: 120px;
+    padding-bottom: var(--space-normal);
   }
 }
 </style>

@@ -1,5 +1,5 @@
 namespace :kanban do
-  desc "Install Kanban feature (run migration and check dependencies)"
+  desc "Install Kanban feature (prepare instance for Kanban without enabling for accounts)"
   task install: :environment do
     puts "Installing Kanban Feature..."
     puts "=" * 50
@@ -45,20 +45,27 @@ namespace :kanban do
       puts "⚠️  NPM package missing. Please run: npm install vuedraggable@next"
     end
     
-    # Check translations
-    if File.exist?(Rails.root.join('config/locales/kanban_en.yml'))
-      puts "✅ Translations file exists"
+    # Check if feature flag exists in features.yml
+    features = YAML.safe_load(File.read(Rails.root.join('config/features.yml')))
+    kanban_feature = features.find { |f| f['name'] == 'kanban' }
+    
+    if kanban_feature
+      puts "✅ Kanban feature flag exists in config/features.yml"
     else
-      puts "⚠️  Translations missing. Will be created when first account enables Kanban"
+      puts "⚠️  Kanban feature flag missing from config/features.yml"
     end
     
     puts "=" * 50
-    puts "Installation check complete!"
+    puts "✅ Kanban installation complete!"
+    puts ""
+    puts "Instance is now ready for Kanban feature."
     puts ""
     puts "Next steps:"
-    puts "1. Run 'npm install vuedraggable@next' if not already installed"
-    puts "2. Restart your Rails server"
-    puts "3. Go to Super Admin > Kanban Setup to enable for accounts"
+    puts "1. Restart your Rails server if needed"
+    puts "2. Go to Super Admin > Settings > Kanban Setup"
+    puts "3. Enable Kanban for specific accounts (default stages will be created automatically)"
+    puts ""
+    puts "Note: Default stages are created per-account when Kanban is enabled, not globally."
   end
   
   desc "Enable Kanban for specific account"
@@ -83,7 +90,7 @@ namespace :kanban do
   
   desc "List accounts with Kanban enabled"
   task list_enabled: :environment do
-    enabled_accounts = Account.with_feature_kanban
+    enabled_accounts = Account.where("feature_flags & ? > 0", Account.flag_mapping[:feature_kanban])
     
     if enabled_accounts.any?
       puts "Accounts with Kanban enabled:"
