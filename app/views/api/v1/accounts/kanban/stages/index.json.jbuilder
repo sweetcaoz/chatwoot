@@ -1,0 +1,13 @@
+json.array! @stages do |stage|
+  json.id stage.id
+  json.board_key stage.board_key
+  json.key stage.key
+  json.name stage.name
+  json.color stage.color
+  json.icon stage.icon
+  json.position stage.position
+  json.active stage.active
+  json.conversations_count stage.conversations_count
+  json.created_at stage.created_at
+  json.updated_at stage.updated_at
+end

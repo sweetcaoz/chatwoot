@@ -187,3 +187,7 @@
 - name: whatsapp_campaign
   display_name: WhatsApp Campaign
   enabled: false
+- name: kanban
+  display_name: Kanban Board
+  enabled: false
+  help_url: https://chwt.app/hc/kanban

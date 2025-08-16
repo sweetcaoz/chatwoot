@@ -191,6 +191,17 @@ Rails.application.routes.draw do
           end
           resources :labels, only: [:index, :show, :create, :update, :destroy]
 
+          namespace :kanban do
+            resources :stages, only: [:index, :show, :create, :update, :destroy] do
+              collection do
+                post :reorder
+              end
+            end
+            resource :board, only: [:index] do
+              post :move
+            end
+          end
+
           resources :notifications, only: [:index, :update, :destroy] do
             collection do
               post :read_all
@@ -543,6 +554,15 @@ Rails.application.routes.draw do
       end
       resources :platform_apps, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resource :instance_status, only: [:show]
+
+      resources :kanban_setup, only: [:index] do
+        collection do
+          post :install_dependencies
+          post :enable_for_account
+          post :disable_for_account
+          post :bulk_enable
+        end
+      end
 
       resource :settings, only: [:show] do
         get :refresh, on: :collection
