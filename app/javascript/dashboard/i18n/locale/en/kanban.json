@@ -1,0 +1,42 @@
+{
+  "KANBAN": {
+    "TITLE": "Kanban Board",
+    "SUBTITLE": "Manage conversations in a visual pipeline",
+    "LOADING": "Loading board...",
+    "NO_STAGES": "No Stages Configured",
+    "NO_STAGES_DESCRIPTION": "Configure stages to start using the Kanban board",
+    "CREATE_STAGES": "Configure Stages",
+    "MANAGE_STAGES": "Manage Stages",
+    "COLUMN_EMPTY": "No conversations in this stage",
+    "NO_SUBJECT": "No subject",
+    "MOVE_ERROR": "Failed to move conversation",
+    "STAGE_MANAGER": {
+      "TITLE": "Manage Kanban Stages",
+      "ADD_STAGE": "Add Stage",
+      "EDIT_STAGE": "Edit Stage",
+      "CREATE_STAGE": "Create Stage",
+      "KEY": "Key",
+      "CONVERSATIONS": "conversations",
+      "STAGE_NAME": "Stage Name",
+      "STAGE_NAME_PLACEHOLDER": "e.g., New, In Progress, Done",
+      "STAGE_KEY": "Stage Key (cannot be changed)",
+      "STAGE_KEY_PLACEHOLDER": "e.g., new, in_progress, done",
+      "STAGE_COLOR": "Stage Color",
+      "STAGE_ICON": "Stage Icon",
+      "STAGE_ICON_PLACEHOLDER": "e.g., flag, check-circle",
+      "DELETE_TITLE": "Delete Stage",
+      "DELETE_MESSAGE": "Are you sure you want to delete the stage '%{name}'? It has %{count} conversations that will be moved to the default stage.",
+      "NAME_REQUIRED": "Stage name is required",
+      "KEY_REQUIRED": "Stage key is required",
+      "REORDER_SUCCESS": "Stages reordered successfully",
+      "REORDER_ERROR": "Failed to reorder stages",
+      "UPDATE_SUCCESS": "Stage updated successfully",
+      "CREATE_SUCCESS": "Stage created successfully",
+      "SAVE_ERROR": "Failed to save stage",
+      "STATUS_UPDATED": "Stage status updated",
+      "STATUS_ERROR": "Failed to update stage status",
+      "DELETE_SUCCESS": "Stage deleted successfully",
+      "DELETE_ERROR": "Failed to delete stage"
+    }
+  }
+}

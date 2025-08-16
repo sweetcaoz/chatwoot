@@ -103,3 +103,88 @@ Chatwoot supports multiple communication channels through a unified interface:
 - Redis for caching, sessions, and background job queues
 - Database migrations include both Rails migrations and custom rake tasks
 - Comprehensive test coverage with RSpec (Ruby) and Vitest (JavaScript)
+
+## Important Patterns & Common Issues
+
+### Adding New Features
+1. **Super Admin Navigation**: New controllers in `super_admin/` namespace require a corresponding Dashboard class in `app/dashboards/`
+2. **Feature Flags**: Use FlagShihTzu's query methods like `Account.with_feature_kanban` instead of `Account.where(feature_kanban: true)`
+3. **Frontend i18n**: Dashboard translations must be added to `app/javascript/dashboard/i18n/locale/en/` as JSON files and imported in the locale's index.js
+
+### Kanban Feature
+- Database: Uses `kanban_stages` table for stage configuration
+- Feature flag: Controlled via `feature_kanban` in the account's feature_flags
+- API endpoints: `/api/v1/accounts/:id/kanban/` namespace
+- Frontend routes: `/accounts/:id/kanban/board` and `/accounts/:id/kanban/stages`
+- Translations: `kanban.json` contains all UI strings
+
+## Current Work & Context
+
+### Project: Kanban Board Feature
+**Status: Phase 1 Complete - Testing**
+
+#### Business Goal
+Provide a Kanban board where conversations are cards organized by pipeline stages. Admins configure stages, agents drag cards to move conversations through workflows. Zero changes to core conversation schema.
+
+#### Current Phase Status
+- ✅ **Phase 1: Core MVP** - COMPLETE, IN TESTING
+  - kanban_stages table and model
+  - Stage management API and UI
+  - Drag-and-drop board with sparse ranking
+  - Unread message prioritization
+  - Dashboard integration
+  
+- 🚧 **Phase 1.5: Essential Polish** - NEXT
+  - Automation action "Change Stage"
+  - Real-time updates via ActionCable
+  - Basic filters (assignee, inbox)
+  - Mobile-responsive view
+
+#### Key Technical Details
+- **Data Storage**: Custom attributes (kanban_stage, kanban_position) - no core schema changes
+- **API**: `/api/v1/accounts/:id/kanban/` namespace
+- **Frontend**: Vue 3 components at `/accounts/:id/kanban`
+- **Permissions**: Admins manage stages, agents move cards
+- **Performance**: Sparse ranking algorithm, 50 cards/column limit
+
+### Recently Completed
+- Fixed Kanban feature from ProjectK release (Aug 2025)
+  - Added missing KanbanSetupDashboard class for Super Admin navigation
+  - Fixed feature flag queries to use FlagShihTzu syntax (`Account.with_feature_kanban` instead of `where(feature_kanban: true)`)
+  - Added frontend i18n translations (kanban.json) and imported in locale index
+  - Updated settings.json with "KANBAN": "Kanban Board" for sidebar
+
+### Known Issues
+- Redis deprecation warnings about blind passthrough in redis-namespace
+
+### Project Preferences
+- Run development server with `make run` or `pnpm run dev`
+- Always check if migrations need to run after pulling changes
+- Test super admin features at `/super_admin`
+- Test kanban at `/app/accounts/:id/kanban` after enabling feature for account
+
+### Design System Requirements
+**IMPORTANT**: All new features MUST follow Chatwoot's design language:
+
+1. **Use Chatwoot Components** (never raw HTML elements):
+   - `woot-button` instead of `<button>` or `class="button"`
+   - `woot-modal`, `woot-input`, `woot-switch` for forms
+   - `fluent-icon` for all icons
+   - `Thumbnail`, `TimeAgo`, `Spinner` for common UI elements
+
+2. **Use CSS Variables** (never hardcoded values):
+   - Colors: `--white`, `--s-200`, `--w-500`, `--color-body`, etc.
+   - Spacing: `--space-small`, `--space-normal`, `--space-large`
+   - Typography: `--font-size-default`, `--font-weight-bold`
+   - Effects: `--shadow-medium`, `--border-radius-normal`
+
+3. **Follow Existing Patterns**:
+   - Check similar components in the codebase first
+   - Modal structure should match other Chatwoot modals
+   - Forms should use consistent layout patterns
+   - Loading states should use Spinner component
+
+4. **Component Imports**:
+   - Global components (woot-*) don't need importing
+   - Shared components from `dashboard/components/` or `shared/components/`
+   - Always verify component exists before using

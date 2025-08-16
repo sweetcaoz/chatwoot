@@ -114,11 +114,32 @@
             />
           </div>
           
-          <woot-input
-            v-model="stageForm.icon"
-            :label="$t('KANBAN.STAGE_MANAGER.STAGE_ICON')"
-            :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_ICON_PLACEHOLDER')"
-          />
+          <div class="form-group">
+            <label>{{ $t('KANBAN.STAGE_MANAGER.STAGE_ICON') }}</label>
+            <multiselect
+              v-model="stageForm.icon"
+              :options="iconOptions"
+              :allow-empty="false"
+              :searchable="true"
+              :show-labels="false"
+              :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_ICON_PLACEHOLDER')"
+              track-by="value"
+              label="label"
+            >
+              <template slot="singleLabel" slot-scope="{ option }">
+                <div class="icon-selector__label">
+                  <fluent-icon :icon="option.value" size="16" />
+                  <span>{{ option.label }}</span>
+                </div>
+              </template>
+              <template slot="option" slot-scope="{ option }">
+                <div class="icon-selector__option">
+                  <fluent-icon :icon="option.value" size="16" />
+                  <span>{{ option.label }}</span>
+                </div>
+              </template>
+            </multiselect>
+          </div>
           
           <div class="modal-footer">
             <woot-button
@@ -154,6 +175,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import draggable from 'vuedraggable';
+import Multiselect from 'shared/components/ui/MultiselectDropdown.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import ColorPicker from 'dashboard/components/widgets/ColorPicker.vue';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal.vue';
@@ -162,6 +184,7 @@ export default {
   name: 'StageManager',
   components: {
     draggable,
+    Multiselect,
     Spinner,
     ColorPicker,
     DeleteModal,
@@ -179,7 +202,7 @@ export default {
         name: '',
         key: '',
         color: '#0EA5E9',
-        icon: 'flag',
+        icon: { value: 'flag', label: 'Flag' }, // Default icon object
         board_key: 'sales',
       },
       errors: {},
@@ -192,6 +215,23 @@ export default {
         '#6B7280', // Gray
         '#EC4899', // Pink
         '#14B8A6', // Teal
+      ],
+      iconOptions: [
+        { value: 'flag', label: 'Flag' },
+        { value: 'sparkles', label: 'New' },
+        { value: 'user-check', label: 'Qualified' },
+        { value: 'document-text', label: 'Document' },
+        { value: 'chat-bubble-left-right', label: 'Discussion' },
+        { value: 'check-circle', label: 'Complete' },
+        { value: 'clock', label: 'Waiting' },
+        { value: 'star', label: 'Important' },
+        { value: 'phone', label: 'Call' },
+        { value: 'mail', label: 'Email' },
+        { value: 'briefcase', label: 'Deal' },
+        { value: 'rocket', label: 'Launch' },
+        { value: 'pause-circle', label: 'On Hold' },
+        { value: 'x-circle', label: 'Canceled' },
+        { value: 'arrow-trending-up', label: 'Progress' },
       ],
     };
   },
@@ -214,9 +254,9 @@ export default {
     },
     showCreateModal(val) {
       if (val) {
-        this.showStageModal = true;
         this.editingStage = null;
         this.resetForm();
+        this.showStageModal = true;
       }
     },
   },
@@ -250,11 +290,14 @@ export default {
     
     editStage(stage) {
       this.editingStage = stage;
+      // Find the icon option object for the multiselect
+      const iconOption = this.iconOptions.find(opt => opt.value === stage.icon) || 
+                         { value: stage.icon, label: stage.icon };
       this.stageForm = {
         name: stage.name,
         key: stage.key,
         color: stage.color,
-        icon: stage.icon,
+        icon: iconOption,
         board_key: stage.board_key,
       };
       this.showStageModal = true;
@@ -275,16 +318,22 @@ export default {
       
       this.isSaving = true;
       try {
+        // Extract icon value from the object
+        const stageData = {
+          ...this.stageForm,
+          icon: this.stageForm.icon?.value || this.stageForm.icon,
+        };
+        
         if (this.editingStage) {
           await this.updateStage({
             id: this.editingStage.id,
-            ...this.stageForm,
+            ...stageData,
           });
           this.$store.dispatch('showAlert', {
             message: this.$t('KANBAN.STAGE_MANAGER.UPDATE_SUCCESS'),
           });
         } else {
-          await this.createStage(this.stageForm);
+          await this.createStage(stageData);
           this.$store.dispatch('showAlert', {
             message: this.$t('KANBAN.STAGE_MANAGER.CREATE_SUCCESS'),
           });
@@ -354,7 +403,7 @@ export default {
         name: '',
         key: '',
         color: '#0EA5E9',
-        icon: 'flag',
+        icon: this.iconOptions[0], // Default to first icon option
         board_key: 'sales',
       };
       this.errors = {};
@@ -501,5 +550,28 @@ export default {
   margin-top: var(--space-large);
   padding-top: var(--space-normal);
   border-top: 1px solid var(--s-100);
+}
+
+.icon-selector {
+  &__label, &__option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    
+    .fluent-icon {
+      color: var(--s-600);
+    }
+    
+    span {
+      font-size: var(--font-size-small);
+      color: var(--s-700);
+    }
+  }
+  
+  &__option:hover {
+    .fluent-icon {
+      color: var(--s-800);
+    }
+  }
 }
 </style>

@@ -9,13 +9,13 @@
       <fluent-icon icon="view-dashboard" size="48" />
       <h3>{{ $t('KANBAN.NO_STAGES') }}</h3>
       <p>{{ $t('KANBAN.NO_STAGES_DESCRIPTION') }}</p>
-      <router-link
+      <woot-button
         v-if="isAdmin"
-        :to="{ name: 'kanban_stages' }"
-        class="button"
+        color-scheme="primary"
+        @click="$router.push({ name: 'kanban_stages' })"
       >
         {{ $t('KANBAN.CREATE_STAGES') }}
-      </router-link>
+      </woot-button>
     </div>
     
     <div v-else class="kanban-board__container">

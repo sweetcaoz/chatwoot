@@ -85,7 +85,7 @@
         <!-- Quick Actions -->
         <div class="grid grid-cols-2 gap-4 mb-6">
           <%= form_with url: bulk_enable_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
-            <%= hidden_field_tag "account_ids[]", Account.where(feature_kanban: false).limit(10).pluck(:id) %>
+            <%= hidden_field_tag "account_ids[]", Account.without_feature_kanban.limit(10).pluck(:id) %>
             <%= f.submit "Enable for Next 10 Accounts", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
           <% end %>
           

@@ -1,7 +1,7 @@
 class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
   def index
     @dependency_status = KanbanDependencyService.check_all_dependencies
-    @enabled_accounts_count = Account.where(feature_kanban: true).count
+    @enabled_accounts_count = Account.with_feature_kanban.count
     @total_accounts = Account.count
   end
 

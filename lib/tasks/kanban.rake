@@ -83,7 +83,7 @@ namespace :kanban do
   
   desc "List accounts with Kanban enabled"
   task list_enabled: :environment do
-    enabled_accounts = Account.where("feature_flags & ? > 0", Account.flag_mapping['feature_kanban'])
+    enabled_accounts = Account.with_feature_kanban
     
     if enabled_accounts.any?
       puts "Accounts with Kanban enabled:"
