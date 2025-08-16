@@ -8,6 +8,7 @@ import { frontendURL } from '../../helper/URLHelper';
 import helpcenterRoutes from './helpcenter/helpcenter.routes';
 import campaignsRoutes from './campaigns/campaigns.routes';
 import { routes as captainRoutes } from './captain/captain.routes';
+import { routes as kanbanRoutes } from './kanban/kanban.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 
@@ -20,6 +21,7 @@ export default {
         ...captainRoutes,
         ...inboxRoutes,
         ...conversation.routes,
+        ...kanbanRoutes,
         ...settings.routes,
         ...contactRoutes,
         ...searchRoutes,

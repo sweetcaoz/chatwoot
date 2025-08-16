@@ -1,0 +1,128 @@
+<div class="p-8">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Kanban Feature Setup</h1>
+
+    <!-- Dependency Status Card -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Dependency Status</h2>
+      
+      <div class="space-y-3">
+        <!-- Migration Status -->
+        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:migration] ? 'bg-green-50' : 'bg-red-50' %>">
+          <div class="flex items-center">
+            <%= @dependency_status[:migration] ? '✅' : '❌' %>
+            <span class="ml-2 font-medium">Database Migration</span>
+          </div>
+          <% unless @dependency_status[:migration] %>
+            <%= form_with url: install_dependencies_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
+              <%= hidden_field_tag :run_migration, true %>
+              <%= f.submit "Run Migration", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+            <% end %>
+          <% end %>
+        </div>
+
+        <!-- NPM Packages Status -->
+        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:npm_packages] ? 'bg-green-50' : 'bg-yellow-50' %>">
+          <div class="flex items-center">
+            <%= @dependency_status[:npm_packages] ? '✅' : '⚠️' %>
+            <span class="ml-2 font-medium">NPM Package (vuedraggable)</span>
+          </div>
+          <% unless @dependency_status[:npm_packages] %>
+            <div class="text-sm text-gray-600">
+              Run in terminal: <code class="bg-gray-100 px-2 py-1 rounded">npm install vuedraggable@next</code>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Translations Status -->
+        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:translations] ? 'bg-green-50' : 'bg-red-50' %>">
+          <div class="flex items-center">
+            <%= @dependency_status[:translations] ? '✅' : '❌' %>
+            <span class="ml-2 font-medium">Translations</span>
+          </div>
+          <% unless @dependency_status[:translations] %>
+            <%= form_with url: install_dependencies_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
+              <%= hidden_field_tag :add_translations, true %>
+              <%= f.submit "Add Translations", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Overall Status -->
+      <div class="mt-6 p-4 rounded <%= @dependency_status[:can_enable] ? 'bg-green-100' : 'bg-yellow-100' %>">
+        <% if @dependency_status[:can_enable] %>
+          <p class="text-green-800 font-medium">✅ All dependencies are met. Kanban can be enabled for accounts.</p>
+        <% else %>
+          <p class="text-yellow-800 font-medium">⚠️ Please install all dependencies before enabling Kanban for accounts.</p>
+        <% end %>
+      </div>
+
+      <!-- Quick Setup Button -->
+      <% unless @dependency_status[:can_enable] %>
+        <div class="mt-4">
+          <%= form_with url: install_dependencies_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
+            <%= hidden_field_tag :run_migration, !@dependency_status[:migration] %>
+            <%= hidden_field_tag :add_translations, !@dependency_status[:translations] %>
+            <%= hidden_field_tag :create_default_stages, true %>
+            <%= f.submit "Run All Setup Steps", class: "w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Account Management -->
+    <% if @dependency_status[:can_enable] %>
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Account Management</h2>
+        
+        <div class="mb-4 p-4 bg-blue-50 rounded">
+          <p class="text-blue-800">
+            <strong><%= @enabled_accounts_count %></strong> of <strong><%= @total_accounts %></strong> accounts have Kanban enabled
+          </p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <%= form_with url: bulk_enable_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
+            <%= hidden_field_tag "account_ids[]", Account.where(feature_kanban: false).limit(10).pluck(:id) %>
+            <%= f.submit "Enable for Next 10 Accounts", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+          <% end %>
+          
+          <%= link_to "Manage Individual Accounts", super_admin_accounts_path, 
+              class: "px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-center" %>
+        </div>
+
+        <!-- Recent Accounts -->
+        <div class="border-t pt-4">
+          <h3 class="font-medium mb-3">Recent Accounts</h3>
+          <div class="space-y-2">
+            <% Account.order(created_at: :desc).limit(5).each do |account| %>
+              <div class="flex items-center justify-between p-3 border rounded">
+                <div>
+                  <span class="font-medium"><%= account.name %></span>
+                  <span class="ml-2 text-sm text-gray-500">#<%= account.id %></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <% if account.feature_kanban? %>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">Enabled</span>
+                    <%= form_with url: disable_for_account_super_admin_kanban_setup_index_path, method: :post, local: true, class: "inline" do |f| %>
+                      <%= hidden_field_tag :account_id, account.id %>
+                      <%= f.submit "Disable", class: "px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700" %>
+                    <% end %>
+                  <% else %>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">Disabled</span>
+                    <%= form_with url: enable_for_account_super_admin_kanban_setup_index_path, method: :post, local: true, class: "inline" do |f| %>
+                      <%= hidden_field_tag :account_id, account.id %>
+                      <%= f.submit "Enable", class: "px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700" %>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

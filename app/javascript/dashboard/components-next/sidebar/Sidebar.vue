@@ -62,6 +62,8 @@ const contactCustomViews = useMapGetter('customViews/getContactCustomViews');
 const conversationCustomViews = useMapGetter(
   'customViews/getConversationCustomViews'
 );
+const currentAccount = useMapGetter('accounts/getAccount');
+const currentAccountId = useMapGetter('getCurrentAccountId');
 
 onMounted(() => {
   store.dispatch('labels/get');
@@ -76,6 +78,12 @@ onMounted(() => {
 const sortedInboxes = computed(() =>
   inboxes.value.slice().sort((a, b) => a.name.localeCompare(b.name))
 );
+
+const isKanbanEnabled = computed(() => {
+  const accountId = currentAccountId.value;
+  const account = currentAccount.value(accountId);
+  return account?.features?.kanban || false;
+});
 
 const newReportRoutes = () => [
   {
@@ -140,6 +148,13 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
         },
+        ...(isKanbanEnabled.value ? [{
+          name: 'Kanban',
+          activeOn: ['kanban_board', 'kanban_stages'],
+          label: t('SIDEBAR.KANBAN'),
+          to: accountScopedRoute('kanban_board'),
+          icon: 'i-lucide-columns-3',
+        }] : []),
         {
           name: 'Folders',
           label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
