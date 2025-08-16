@@ -106,7 +106,8 @@ export const actions = {
     }
   },
 
-  subscribeToKanbanUpdates({ commit, state }) {
+  subscribeToKanbanUpdates({ commit, state, rootState }) {
+    const accountId = rootState.auth?.user?.account?.id || 1;
     const channel = `kanban_${accountId}_${state.boardKey}`;
     
     window.chatwootPubsubToken.subscribe(channel, event => {

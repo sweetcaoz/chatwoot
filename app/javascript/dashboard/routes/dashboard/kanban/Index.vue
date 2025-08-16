@@ -3,7 +3,6 @@
     <div class="kanban-header">
       <div class="kanban-header__title">
         <h2 class="kanban-title">{{ $t('KANBAN.TITLE') }}</h2>
-        <p class="kanban-subtitle">{{ $t('KANBAN.SUBTITLE') }}</p>
       </div>
       <div class="kanban-header__actions">
         <router-link
@@ -41,8 +40,8 @@ export default {
 .kanban-layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: var(--s-50);
+  height: 100vh;
+  background-color: var(--s-25);
 }
 
 .kanban-header {

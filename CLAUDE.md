@@ -375,3 +375,38 @@ Provide a Kanban board where conversations are cards organized by pipeline stage
 - [ ] Screen reader compatible (proper ARIA labels)
 - [ ] Focus indicators visible and logical
 - [ ] Color contrast meets standards
+
+# Recent Project Updates (Session: 2025-08-16)
+
+## Critical Issues Resolved:
+
+### 1. Stage Manager & Kanban UI Fixes:
+- **Modal System**: Fixed broken "Add Stage" button by removing conflicting `showCreateModal` state - modal now opens properly
+- **Auto-Generated Keys**: Stage keys now auto-generate from names (lowercase, underscores) - eliminated manual input requirement  
+- **Design Consistency**: Applied proper Chatwoot styling - `--s-25` backgrounds, consistent spacing, proper layout
+- **Button Positioning**: Fixed Stage Manager buttons appearing in wrong corner - now properly aligned in UI
+- **UI Clarity**: Removed confusing "Manage conversations in a visual pipeline" subtitle for cleaner interface
+
+### 2. Super Admin Integration Fixes:
+- **Feature Flag Security**: Fixed `NoMethodError: with_feature_kanban` by implementing secure FlagShihTzu pattern:
+  ```ruby
+  # CORRECT & SECURE - Use bit operators with parameterized queries
+  Account.where("feature_flags & ? > 0", Account.flag_mapping[:feature_kanban])    # enabled
+  Account.where("feature_flags & ? = 0", Account.flag_mapping[:feature_kanban])    # disabled
+  # NEVER use: Account.with_feature_kanban (doesn't exist)
+  # NEVER expose raw SQL conditions for security
+  ```
+- **Navigation Structure**: Moved "Kanban Setup" to Settings dropdown (proper admin UX pattern)
+- **Menu Integration**: Updated navigation helper to expand Settings menu when on Kanban Setup pages
+
+### 3. Key Technical Patterns Established:
+- **FlagShihTzu Security**: Always use parameterized bit operator queries for feature flags
+- **Vue Modal Management**: Single source of truth for modal state - avoid conflicting booleans
+- **Form Auto-Generation**: Watch field changes to auto-populate related fields for better UX
+- **Admin Navigation**: Configuration pages belong in Settings dropdown, not standalone menus
+
+## Current Status:
+- ✅ **Phase 1 MVP**: Fully functional kanban board with drag-drop, stage management
+- ✅ **Super Admin**: Secure setup interface properly integrated into Settings menu  
+- ✅ **Design System**: Consistent Chatwoot styling applied throughout all components
+- ⏳ **Next Phase**: Ready for Phase 1.5 (automation triggers, real-time updates, advanced filters)

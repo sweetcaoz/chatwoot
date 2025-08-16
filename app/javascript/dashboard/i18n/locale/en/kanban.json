@@ -38,9 +38,11 @@
       "DELETE_SUCCESS": "Stage deleted successfully",
       "DELETE_ERROR": "Failed to delete stage",
       "CANCEL": "Cancel",
-      "CREATE": "Create",
+      "CREATE": "Create", 
       "UPDATE": "Update",
-      "DELETE": "Delete"
+      "DELETE": "Delete",
+      "KEY_READONLY": "Key cannot be changed after creation",
+      "KEY_AUTO_GENERATED": "Auto-generated from stage name"
     }
   }
 }

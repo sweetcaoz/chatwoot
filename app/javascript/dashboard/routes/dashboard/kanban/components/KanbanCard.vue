@@ -60,7 +60,7 @@
     </div>
     
     <div class="kanban-card__footer">
-      <time-ago
+      <TimeAgo
         :timestamp="conversation.last_activity_at"
         class="kanban-card__time"
       />

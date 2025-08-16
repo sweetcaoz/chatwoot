@@ -97,19 +97,21 @@ export default {
   flex: 1;
   overflow: hidden;
   position: relative;
+  background-color: var(--s-25);
 
   &__container {
     height: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: var(--space-normal);
+    padding: var(--space-large);
   }
 
   &__columns {
     display: flex;
-    gap: var(--space-normal);
+    gap: var(--space-large);
     height: 100%;
     min-width: max-content;
+    align-items: flex-start;
   }
 }
 

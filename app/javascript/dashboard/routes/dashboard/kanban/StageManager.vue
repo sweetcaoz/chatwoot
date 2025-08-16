@@ -5,7 +5,7 @@
       <woot-button
         icon="add"
         color-scheme="success"
-        @click="showCreateModal = true"
+@click="openCreateModal"
       >
         {{ $t('KANBAN.STAGE_MANAGER.ADD_STAGE') }}
       </woot-button>
@@ -102,7 +102,8 @@
             :label="$t('KANBAN.STAGE_MANAGER.STAGE_KEY')"
             :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_KEY_PLACEHOLDER')"
             :error="errors.key"
-            :disabled="!!editingStage"
+            :disabled="true"
+            :help-text="editingStage ? 'Key cannot be changed after creation' : 'Auto-generated from stage name'"
             required
           />
           
@@ -188,7 +189,6 @@ export default {
       localStages: [],
       showStageModal: false,
       showDeleteModal: false,
-      showCreateModal: false,
       editingStage: null,
       deletingStage: null,
       isSaving: false,
@@ -246,11 +246,10 @@ export default {
     stages(newStages) {
       this.localStages = [...newStages];
     },
-    showCreateModal(val) {
-      if (val) {
-        this.editingStage = null;
-        this.resetForm();
-        this.showStageModal = true;
+    'stageForm.name'(newName) {
+      if (!this.editingStage && newName) {
+        // Auto-generate key from name (lowercase, replace spaces with underscores)
+        this.stageForm.key = newName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       }
     },
   },
@@ -302,9 +301,9 @@ export default {
         this.errors.name = this.$t('KANBAN.STAGE_MANAGER.NAME_REQUIRED');
         return;
       }
+      // Key is auto-generated from name, ensure it exists
       if (!this.stageForm.key) {
-        this.errors.key = this.$t('KANBAN.STAGE_MANAGER.KEY_REQUIRED');
-        return;
+        this.stageForm.key = this.stageForm.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       }
       
       this.isSaving = true;
@@ -371,9 +370,14 @@ export default {
       }
     },
     
+    openCreateModal() {
+      this.editingStage = null;
+      this.resetForm();
+      this.showStageModal = true;
+    },
+    
     closeStageModal() {
       this.showStageModal = false;
-      this.showCreateModal = false;
       this.editingStage = null;
       this.resetForm();
     },
@@ -399,16 +403,19 @@ export default {
 
 <style scoped lang="scss">
 .stage-manager {
-  padding: var(--space-large);
-  background-color: var(--white);
-  height: 100%;
+  padding: 0;
+  background-color: var(--s-25);
+  height: 100vh;
   overflow-y: auto;
   
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-large);
+    padding: var(--space-large);
+    background-color: var(--white);
+    border-bottom: 1px solid var(--s-100);
+    margin-bottom: 0;
     
     h3 {
       margin: 0;
@@ -424,10 +431,14 @@ export default {
     padding: var(--space-mega);
   }
   
+  &__content {
+    padding: var(--space-large);
+  }
+  
   &__list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-small);
+    gap: var(--space-normal);
   }
 }
 

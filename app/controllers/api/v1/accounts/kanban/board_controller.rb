@@ -19,11 +19,19 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
     
     broadcast_kanban_update
     head :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'Conversation not found' }, status: :not_found
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: :unprocessable_entity
+  rescue StandardError => e
+    render json: { error: 'Failed to move conversation' }, status: :internal_server_error
   end
 
   private
+
+  def check_authorization
+    authorize(Current.account)
+  end
 
   def ensure_kanban_enabled
     unless KanbanDependencyService.kanban_available_for_account?(Current.account)
@@ -101,25 +109,31 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
   end
 
   def calculate_new_position(position_params)
-    return position_params[:absolute_position].to_f if position_params[:absolute_position]
+    return position_params[:absolute_position].to_f if position_params&.dig(:absolute_position)
+    return Time.now.to_f * 1000 unless position_params.is_a?(Hash)
     
-    if position_params[:after_id] && position_params[:before_id]
-      after_conversation = Current.account.conversations.find(position_params[:after_id])
-      before_conversation = Current.account.conversations.find(position_params[:before_id])
-      
-      after_pos = (after_conversation.custom_attributes['kanban_position'] || 0).to_f
-      before_pos = (before_conversation.custom_attributes['kanban_position'] || 0).to_f
-      
-      (after_pos + before_pos) / 2.0
-    elsif position_params[:after_id]
-      after_conversation = Current.account.conversations.find(position_params[:after_id])
-      after_pos = (after_conversation.custom_attributes['kanban_position'] || 0).to_f
-      after_pos + 1000.0
-    elsif position_params[:before_id]
-      before_conversation = Current.account.conversations.find(position_params[:before_id])
-      before_pos = (before_conversation.custom_attributes['kanban_position'] || 0).to_f
-      before_pos - 1000.0
-    else
+    begin
+      if position_params[:after_id] && position_params[:before_id]
+        after_conversation = Current.account.conversations.find(position_params[:after_id])
+        before_conversation = Current.account.conversations.find(position_params[:before_id])
+        
+        after_pos = (after_conversation.custom_attributes['kanban_position'] || 0).to_f
+        before_pos = (before_conversation.custom_attributes['kanban_position'] || 0).to_f
+        
+        (after_pos + before_pos) / 2.0
+      elsif position_params[:after_id]
+        after_conversation = Current.account.conversations.find(position_params[:after_id])
+        after_pos = (after_conversation.custom_attributes['kanban_position'] || 0).to_f
+        after_pos + 1000.0
+      elsif position_params[:before_id]
+        before_conversation = Current.account.conversations.find(position_params[:before_id])
+        before_pos = (before_conversation.custom_attributes['kanban_position'] || 0).to_f
+        before_pos - 1000.0
+      else
+        Time.now.to_f * 1000
+      end
+    rescue ActiveRecord::RecordNotFound
+      # Fallback if referenced conversations don't exist
       Time.now.to_f * 1000
     end
   end

@@ -3,7 +3,7 @@ class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
   
   def index
     @dependency_status = KanbanDependencyService.check_all_dependencies
-    @enabled_accounts_count = Account.with_feature_kanban.count
+    @enabled_accounts_count = Account.where("feature_flags & ? > 0", Account.flag_mapping[:feature_kanban]).count
     @total_accounts = Account.count
   end
 

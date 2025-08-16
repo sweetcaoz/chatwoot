@@ -30,8 +30,9 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::BaseContr
   end
 
   def reorder
+    board_key = params[:board_key] || KanbanStage::DEFAULT_BOARD_KEY
     stages = Current.account.kanban_stages
-                    .for_board(@stage.board_key)
+                    .for_board(board_key)
                     .where(id: params[:stage_ids])
     
     stages.each_with_index do |stage, index|
@@ -42,6 +43,10 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::BaseContr
   end
 
   private
+
+  def check_authorization
+    authorize(Current.account)
+  end
 
   def ensure_kanban_enabled
     unless KanbanDependencyService.kanban_available_for_account?(Current.account)
