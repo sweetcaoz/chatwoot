@@ -1,5 +1,6 @@
 class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseController
   before_action :current_account
+  before_action :debug_context
   before_action :ensure_kanban_enabled
   before_action :check_authorization
 
@@ -31,6 +32,11 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
 
   def check_authorization
     authorize(Current.account)
+  end
+
+  def debug_context
+    Rails.logger.info("[KANBAN] user_id=#{current_user&.id} params_account_id=#{params[:account_id]} "\
+                      "Current.account=#{Current.account&.id} Current.account_user=#{Current.account_user&.id}")
   end
 
   def pundit_user
