@@ -1,60 +1,93 @@
-<div class="p-8">
-  <div class="max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">Kanban Feature Setup</h1>
-
+<% content_for(:title) do %>
+  Kanban Setup
+<% end %>
+<header class="flex px-8 py-4 items-center border-b border-n-weak" role="banner">
+  <div class="border border-n-weak mr-4 p-2 rounded-full">
+    <svg width="24" height="24"><use xlink:href="#icon-view-dashboard" /></svg>
+  </div>
+  <div class="flex flex-col h-14 justify-center">
+    <h1 class="text-base font-medium leading-6 text-n-slate-12" id="page-title">
+      <%= content_for(:title) %>
+    </h1>
+    <p class="text-sm font-normal leading-5 text-slate-500 m-0">Configure Kanban feature for your Chatwoot instance</p>
+  </div>
+</header>
+<section class="main-content__body px-8">
+  <div class="bg-white py-2 px-4 xl:px-0">
     <!-- Dependency Status Card -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">Dependency Status</h2>
+    <div class="outline outline-1 outline-n-container rounded-lg p-6 shadow-sm mb-6">
+      <h2 class="text-base font-medium leading-6 text-n-slate-12 mb-4">Dependency Status</h2>
       
       <div class="space-y-3">
         <!-- Migration Status -->
-        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:migration] ? 'bg-green-50' : 'bg-red-50' %>">
+        <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg <%= @dependency_status[:migration] ? 'bg-green-100/30' : 'bg-red-100/30' %>">
           <div class="flex items-center">
-            <%= @dependency_status[:migration] ? '✅' : '❌' %>
-            <span class="ml-2 font-medium">Database Migration</span>
+            <span class="<%= @dependency_status[:migration] ? 'text-green-600' : 'text-red-600' %> text-lg mr-3">
+              <%= @dependency_status[:migration] ? '✅' : '❌' %>
+            </span>
+            <div>
+              <span class="text-n-slate-12 font-medium">Database Migration</span>
+              <p class="text-n-slate-11 text-sm m-0">kanban_stages table and indexes</p>
+            </div>
           </div>
           <% unless @dependency_status[:migration] %>
             <%= form_with url: install_dependencies_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
               <%= hidden_field_tag :run_migration, true %>
-              <%= f.submit "Run Migration", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+              <%= f.submit "Run Migration", class: "inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-woot-500 hover:bg-woot-600 rounded-lg focus:outline-none transition-colors" %>
             <% end %>
           <% end %>
         </div>
 
         <!-- NPM Packages Status -->
-        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:npm_packages] ? 'bg-green-50' : 'bg-yellow-50' %>">
+        <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg <%= @dependency_status[:npm_packages] ? 'bg-green-100/30' : 'bg-yellow-100/30' %>">
           <div class="flex items-center">
-            <%= @dependency_status[:npm_packages] ? '✅' : '⚠️' %>
-            <span class="ml-2 font-medium">NPM Package (vuedraggable)</span>
+            <span class="<%= @dependency_status[:npm_packages] ? 'text-green-600' : 'text-yellow-600' %> text-lg mr-3">
+              <%= @dependency_status[:npm_packages] ? '✅' : '⚠️' %>
+            </span>
+            <div>
+              <span class="text-n-slate-12 font-medium">NPM Package (vuedraggable)</span>
+              <p class="text-n-slate-11 text-sm m-0">Required for drag-and-drop functionality</p>
+            </div>
           </div>
           <% unless @dependency_status[:npm_packages] %>
-            <div class="text-sm text-gray-600">
-              Run in terminal: <code class="bg-gray-100 px-2 py-1 rounded">npm install vuedraggable@next</code>
+            <div class="text-sm text-n-slate-11">
+              Run in terminal: <code class="bg-n-slate-50 text-n-slate-12 px-2 py-1 rounded font-mono text-xs">npm install vuedraggable@next</code>
             </div>
           <% end %>
         </div>
 
         <!-- Translations Status -->
-        <div class="flex items-center justify-between p-3 rounded <%= @dependency_status[:translations] ? 'bg-green-50' : 'bg-red-50' %>">
+        <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg <%= @dependency_status[:translations] ? 'bg-green-100/30' : 'bg-red-100/30' %>">
           <div class="flex items-center">
-            <%= @dependency_status[:translations] ? '✅' : '❌' %>
-            <span class="ml-2 font-medium">Translations</span>
+            <span class="<%= @dependency_status[:translations] ? 'text-green-600' : 'text-red-600' %> text-lg mr-3">
+              <%= @dependency_status[:translations] ? '✅' : '❌' %>
+            </span>
+            <div>
+              <span class="text-n-slate-12 font-medium">Translations</span>
+              <p class="text-n-slate-11 text-sm m-0">Frontend internationalization files</p>
+            </div>
           </div>
           <% unless @dependency_status[:translations] %>
             <%= form_with url: install_dependencies_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
               <%= hidden_field_tag :add_translations, true %>
-              <%= f.submit "Add Translations", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+              <%= f.submit "Add Translations", class: "inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-woot-500 hover:bg-woot-600 rounded-lg focus:outline-none transition-colors" %>
             <% end %>
           <% end %>
         </div>
       </div>
 
       <!-- Overall Status -->
-      <div class="mt-6 p-4 rounded <%= @dependency_status[:can_enable] ? 'bg-green-100' : 'bg-yellow-100' %>">
+      <div class="mt-6 p-4 outline outline-1 outline-n-container rounded-lg <%= @dependency_status[:can_enable] ? 'bg-green-100/30' : 'bg-yellow-100/30' %>">
         <% if @dependency_status[:can_enable] %>
-          <p class="text-green-800 font-medium">✅ All dependencies are met. Kanban can be enabled for accounts.</p>
+          <div class="flex items-center">
+            <span class="text-green-600 text-lg mr-3">✅</span>
+            <p class="text-green-800 font-medium text-sm m-0">All dependencies are met. Kanban can be enabled for accounts.</p>
+          </div>
         <% else %>
-          <p class="text-yellow-800 font-medium">⚠️ Please install all dependencies before enabling Kanban for accounts.</p>
+          <div class="flex items-center">
+            <span class="text-yellow-600 text-lg mr-3">⚠️</span>
+            <p class="text-yellow-800 font-medium text-sm m-0">Please install all dependencies before enabling Kanban for accounts.</p>
+          </div>
         <% end %>
       </div>
 
@@ -65,7 +98,7 @@
             <%= hidden_field_tag :run_migration, !@dependency_status[:migration] %>
             <%= hidden_field_tag :add_translations, !@dependency_status[:translations] %>
             <%= hidden_field_tag :create_default_stages, true %>
-            <%= f.submit "Run All Setup Steps", class: "w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium" %>
+            <%= f.submit "Run All Setup Steps", class: "w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg focus:outline-none transition-colors" %>
           <% end %>
         </div>
       <% end %>
@@ -73,50 +106,59 @@
 
     <!-- Account Management -->
     <% if @dependency_status[:can_enable] %>
-      <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold mb-4">Account Management</h2>
+      <div class="outline outline-1 outline-n-container rounded-lg p-6 shadow-sm">
+        <h2 class="text-base font-medium leading-6 text-n-slate-12 mb-4">Account Management</h2>
         
-        <div class="mb-4 p-4 bg-blue-50 rounded">
-          <p class="text-blue-800">
-            <strong><%= @enabled_accounts_count %></strong> of <strong><%= @total_accounts %></strong> accounts have Kanban enabled
-          </p>
+        <div class="mb-6 p-4 outline outline-1 outline-n-container rounded-lg bg-blue-100/30">
+          <div class="flex items-center">
+            <span class="text-blue-600 text-lg mr-3">📊</span>
+            <p class="text-n-slate-12 text-sm m-0">
+              <strong class="text-woot-600"><%= @enabled_accounts_count %></strong> of 
+              <strong class="text-n-slate-12"><%= @total_accounts %></strong> accounts have Kanban enabled
+            </p>
+          </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <%= form_with url: bulk_enable_super_admin_kanban_setup_index_path, method: :post, local: true do |f| %>
             <% Account.where("feature_flags & ? = 0", Account.flag_mapping[:feature_kanban]).limit(10).pluck(:id).each do |account_id| %>
               <%= hidden_field_tag "account_ids[]", account_id %>
             <% end %>
-            <%= f.submit "Enable for Next 10 Accounts", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+            <%= f.submit "Enable for Next 10 Accounts", class: "inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-woot-500 hover:bg-woot-600 rounded-lg focus:outline-none transition-colors" %>
           <% end %>
           
           <%= link_to "Manage Individual Accounts", super_admin_accounts_path, 
-              class: "px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-center" %>
+              class: "inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-n-slate-12 bg-transparent hover:bg-slate-50 outline outline-1 outline-n-container rounded-lg focus:outline-none transition-colors" %>
         </div>
 
         <!-- Recent Accounts -->
-        <div class="border-t pt-4">
-          <h3 class="font-medium mb-3">Recent Accounts</h3>
-          <div class="space-y-2">
+        <div class="border-t border-n-weak pt-6">
+          <h3 class="text-n-slate-12 font-medium text-sm mb-4">Recent Accounts</h3>
+          <div class="space-y-3">
             <% Account.order(created_at: :desc).limit(5).each do |account| %>
-              <div class="flex items-center justify-between p-3 border rounded">
-                <div>
-                  <span class="font-medium"><%= account.name %></span>
-                  <span class="ml-2 text-sm text-gray-500">#<%= account.id %></span>
+              <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg hover:bg-slate-25 transition-colors">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-woot-100 rounded-full flex items-center justify-center mr-3">
+                    <span class="text-woot-600 font-medium text-xs"><%= account.name.first.upcase %></span>
+                  </div>
+                  <div>
+                    <span class="text-n-slate-12 font-medium text-sm"><%= account.name %></span>
+                    <p class="text-n-slate-11 text-xs m-0">ID: #<%= account.id %></p>
+                  </div>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center gap-3">
                   <% if account.feature_kanban? %>
-                    <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">Enabled</span>
+                    <span class="px-3 py-1 bg-green-100/70 text-green-800 text-xs font-medium rounded-full">Enabled</span>
                     <%= form_with url: disable_for_account_super_admin_kanban_setup_index_path, method: :post, local: true, class: "inline" do |f| %>
                       <%= hidden_field_tag :account_id, account.id %>
-                      <%= f.submit "Disable", class: "px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700" %>
+                      <%= f.submit "Disable", class: "inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg focus:outline-none transition-colors" %>
                     <% end %>
                   <% else %>
-                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">Disabled</span>
+                    <span class="px-3 py-1 bg-slate-100 text-n-slate-11 text-xs font-medium rounded-full">Disabled</span>
                     <%= form_with url: enable_for_account_super_admin_kanban_setup_index_path, method: :post, local: true, class: "inline" do |f| %>
                       <%= hidden_field_tag :account_id, account.id %>
-                      <%= f.submit "Enable", class: "px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700" %>
+                      <%= f.submit "Enable", class: "inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg focus:outline-none transition-colors" %>
                     <% end %>
                   <% end %>
                 </div>
@@ -127,4 +169,4 @@
       </div>
     <% end %>
   </div>
-</div>
+</section>

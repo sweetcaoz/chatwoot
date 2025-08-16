@@ -7,7 +7,7 @@
       <div class="kanban-header__actions">
         <router-link
           v-if="isAdmin"
-          :to="{ name: 'kanban_stages' }"
+          :to="{ name: 'kanban_settings_list' }"
           class="kanban-settings-link"
         >
           <fluent-icon icon="settings" size="16" />

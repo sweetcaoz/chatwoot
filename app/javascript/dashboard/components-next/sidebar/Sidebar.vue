@@ -125,6 +125,13 @@ const menuItems = computed(() => {
         badge: 'notifications/getHasUnreadNotifications',
       },
     },
+    ...(isKanbanEnabled.value ? [{
+      name: 'Kanban',
+      label: t('SIDEBAR.KANBAN'),
+      icon: 'i-lucide-columns-3',
+      to: accountScopedRoute('kanban_board'),
+      activeOn: ['kanban_board', 'kanban_stages'],
+    }] : []),
     {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
@@ -148,13 +155,6 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
         },
-        ...(isKanbanEnabled.value ? [{
-          name: 'Kanban',
-          activeOn: ['kanban_board', 'kanban_stages'],
-          label: t('SIDEBAR.KANBAN'),
-          to: accountScopedRoute('kanban_board'),
-          icon: 'i-lucide-columns-3',
-        }] : []),
         {
           name: 'Folders',
           label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
@@ -435,6 +435,12 @@ const menuItems = computed(() => {
           icon: 'i-lucide-tags',
           to: accountScopedRoute('labels_list'),
         },
+        ...(isKanbanEnabled.value ? [{
+          name: 'Settings Kanban',
+          label: t('SIDEBAR.KANBAN_SETTINGS'),
+          icon: 'i-lucide-columns-3',
+          to: accountScopedRoute('kanban_settings_list'),
+        }] : []),
         {
           name: 'Settings Custom Attributes',
           label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),

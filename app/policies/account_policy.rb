@@ -30,4 +30,16 @@ class AccountPolicy < ApplicationPolicy
   def toggle_deletion?
     @account_user.administrator?
   end
+
+  def kanban?
+    @account_user.administrator? || @account_user.agent?
+  end
+
+  def kanban_stages?
+    @account_user.administrator?
+  end
+
+  def kanban_board?
+    @account_user.administrator? || @account_user.agent?
+  end
 end

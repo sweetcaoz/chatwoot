@@ -33,6 +33,14 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
     authorize(Current.account)
   end
 
+  def pundit_user
+    {
+      user: current_user,
+      account: Current.account,
+      account_user: Current.account_user
+    }
+  end
+
   def ensure_kanban_enabled
     unless KanbanDependencyService.kanban_available_for_account?(Current.account)
       render json: { 

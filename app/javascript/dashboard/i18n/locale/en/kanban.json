@@ -92,6 +92,11 @@
       "LOADING": "Loading stages...",
       "NO_STAGES": "No stages configured yet",
       "MODAL_DESCRIPTION": "Configure workflow stages for your kanban board"
+    },
+    "SETTINGS": {
+      "TITLE": "Kanban Stages",
+      "DESCRIPTION": "Configure workflow stages for your kanban board",
+      "LEARN_MORE": "Learn more about Kanban"
     }
   }
 }

@@ -9,10 +9,17 @@ class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
 
   def install_dependencies
     begin
-      # Run migration
+      # Run migration using proper Rails migration
       if params[:run_migration] == 'true'
-        ActiveRecord::Base.connection.execute(migration_sql)
-        flash[:notice] = 'Migration completed successfully'
+        # Check if migration needs to be run
+        unless ActiveRecord::Base.connection.table_exists?('kanban_stages')
+          # Run pending migrations that include kanban
+          Rails.application.load_tasks
+          Rake::Task['db:migrate'].invoke
+          flash[:notice] = 'Migration completed successfully'
+        else
+          flash[:notice] = 'Migration already completed'
+        end
       end
 
       # NPM packages need to be installed manually
@@ -94,32 +101,6 @@ class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
     params.permit(account_ids: [])
   end
 
-  def migration_sql
-    <<-SQL
-      CREATE TABLE IF NOT EXISTS kanban_stages (
-        id BIGSERIAL PRIMARY KEY,
-        account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-        board_key VARCHAR(255) NOT NULL DEFAULT 'sales',
-        key VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        color VARCHAR(255),
-        icon VARCHAR(255),
-        position INTEGER NOT NULL DEFAULT 0,
-        active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP NOT NULL
-      );
-
-      CREATE UNIQUE INDEX IF NOT EXISTS index_kanban_stages_unique_key 
-        ON kanban_stages(account_id, board_key, key);
-      
-      CREATE INDEX IF NOT EXISTS index_kanban_stages_position 
-        ON kanban_stages(account_id, board_key, position);
-      
-      CREATE INDEX IF NOT EXISTS index_kanban_stages_active 
-        ON kanban_stages(account_id, board_key, active);
-    SQL
-  end
 
   def add_kanban_translations
     # This would add translations to the appropriate locale files
