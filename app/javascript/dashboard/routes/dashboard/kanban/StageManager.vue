@@ -26,7 +26,7 @@
         <template #item="{ element }">
           <div class="stage-item" :key="element.id">
             <div class="stage-item__handle">
-              <fluent-icon icon="re-order" size="16" />
+              <fluent-icon icon="drag" size="16" />
             </div>
             
             <div class="stage-item__color">
@@ -106,39 +106,35 @@
             required
           />
           
-          <div class="form-group">
-            <label>{{ $t('KANBAN.STAGE_MANAGER.STAGE_COLOR') }}</label>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">
+              {{ $t('KANBAN.STAGE_MANAGER.STAGE_COLOR') }}
+            </label>
             <color-picker
               v-model="stageForm.color"
               :colors="predefinedColors"
             />
           </div>
           
-          <div class="form-group">
-            <label>{{ $t('KANBAN.STAGE_MANAGER.STAGE_ICON') }}</label>
-            <multiselect
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">
+              {{ $t('KANBAN.STAGE_MANAGER.STAGE_ICON') }}
+            </label>
+            <select
               v-model="stageForm.icon"
-              :options="iconOptions"
-              :allow-empty="false"
-              :searchable="true"
-              :show-labels="false"
-              :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_ICON_PLACEHOLDER')"
-              track-by="value"
-              label="label"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <template slot="singleLabel" slot-scope="{ option }">
-                <div class="icon-selector__label">
-                  <fluent-icon :icon="option.value" size="16" />
-                  <span>{{ option.label }}</span>
-                </div>
-              </template>
-              <template slot="option" slot-scope="{ option }">
-                <div class="icon-selector__option">
-                  <fluent-icon :icon="option.value" size="16" />
-                  <span>{{ option.label }}</span>
-                </div>
-              </template>
-            </multiselect>
+              <option
+                v-for="icon in iconOptions"
+                :key="icon.value"
+                :value="icon.value"
+              >
+                {{ icon.label }}
+              </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ $t('KANBAN.STAGE_MANAGER.STAGE_ICON_PLACEHOLDER') }}
+            </p>
           </div>
           
           <div class="modal-footer">
@@ -146,13 +142,13 @@
               variant="clear"
               @click="closeStageModal"
             >
-              {{ $t('COMMON.CANCEL') }}
+              {{ $t('KANBAN.STAGE_MANAGER.CANCEL') }}
             </woot-button>
             <woot-button
               :loading="isSaving"
               type="submit"
             >
-              {{ editingStage ? $t('COMMON.UPDATE') : $t('COMMON.CREATE') }}
+              {{ editingStage ? $t('KANBAN.STAGE_MANAGER.UPDATE') : $t('KANBAN.STAGE_MANAGER.CREATE') }}
             </woot-button>
           </div>
         </form>
@@ -166,8 +162,8 @@
       :on-confirm="deleteStage"
       :title="$t('KANBAN.STAGE_MANAGER.DELETE_TITLE')"
       :message="deleteMessage"
-      :confirm-text="$t('COMMON.DELETE')"
-      :reject-text="$t('COMMON.CANCEL')"
+      :confirm-text="$t('KANBAN.STAGE_MANAGER.DELETE')"
+      :reject-text="$t('KANBAN.STAGE_MANAGER.CANCEL')"
     />
   </div>
 </template>
@@ -175,7 +171,6 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import draggable from 'vuedraggable';
-import Multiselect from 'shared/components/ui/MultiselectDropdown.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import ColorPicker from 'dashboard/components/widgets/ColorPicker.vue';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal.vue';
@@ -184,7 +179,6 @@ export default {
   name: 'StageManager',
   components: {
     draggable,
-    Multiselect,
     Spinner,
     ColorPicker,
     DeleteModal,
@@ -202,7 +196,7 @@ export default {
         name: '',
         key: '',
         color: '#0EA5E9',
-        icon: { value: 'flag', label: 'Flag' }, // Default icon object
+        icon: 'flag', // Simple string value
         board_key: 'sales',
       },
       errors: {},
@@ -218,20 +212,20 @@ export default {
       ],
       iconOptions: [
         { value: 'flag', label: 'Flag' },
-        { value: 'sparkles', label: 'New' },
-        { value: 'user-check', label: 'Qualified' },
-        { value: 'document-text', label: 'Document' },
-        { value: 'chat-bubble-left-right', label: 'Discussion' },
-        { value: 'check-circle', label: 'Complete' },
+        { value: 'sparkle', label: 'New' },
+        { value: 'person-check', label: 'Qualified' },
+        { value: 'document', label: 'Document' },
+        { value: 'chat-multiple', label: 'Discussion' },
+        { value: 'checkmark-circle', label: 'Complete' },
         { value: 'clock', label: 'Waiting' },
         { value: 'star', label: 'Important' },
-        { value: 'phone', label: 'Call' },
+        { value: 'call', label: 'Call' },
         { value: 'mail', label: 'Email' },
         { value: 'briefcase', label: 'Deal' },
         { value: 'rocket', label: 'Launch' },
-        { value: 'pause-circle', label: 'On Hold' },
-        { value: 'x-circle', label: 'Canceled' },
-        { value: 'arrow-trending-up', label: 'Progress' },
+        { value: 'pause', label: 'On Hold' },
+        { value: 'dismiss-circle', label: 'Canceled' },
+        { value: 'arrow-growth', label: 'Progress' },
       ],
     };
   },
@@ -290,14 +284,11 @@ export default {
     
     editStage(stage) {
       this.editingStage = stage;
-      // Find the icon option object for the multiselect
-      const iconOption = this.iconOptions.find(opt => opt.value === stage.icon) || 
-                         { value: stage.icon, label: stage.icon };
       this.stageForm = {
         name: stage.name,
         key: stage.key,
         color: stage.color,
-        icon: iconOption,
+        icon: stage.icon || 'flag',
         board_key: stage.board_key,
       };
       this.showStageModal = true;
@@ -318,22 +309,16 @@ export default {
       
       this.isSaving = true;
       try {
-        // Extract icon value from the object
-        const stageData = {
-          ...this.stageForm,
-          icon: this.stageForm.icon?.value || this.stageForm.icon,
-        };
-        
         if (this.editingStage) {
           await this.updateStage({
             id: this.editingStage.id,
-            ...stageData,
+            ...this.stageForm,
           });
           this.$store.dispatch('showAlert', {
             message: this.$t('KANBAN.STAGE_MANAGER.UPDATE_SUCCESS'),
           });
         } else {
-          await this.createStage(stageData);
+          await this.createStage(this.stageForm);
           this.$store.dispatch('showAlert', {
             message: this.$t('KANBAN.STAGE_MANAGER.CREATE_SUCCESS'),
           });
@@ -403,7 +388,7 @@ export default {
         name: '',
         key: '',
         color: '#0EA5E9',
-        icon: this.iconOptions[0], // Default to first icon option
+        icon: 'flag', // Default icon
         board_key: 'sales',
       };
       this.errors = {};
@@ -550,28 +535,5 @@ export default {
   margin-top: var(--space-large);
   padding-top: var(--space-normal);
   border-top: 1px solid var(--s-100);
-}
-
-.icon-selector {
-  &__label, &__option {
-    display: flex;
-    align-items: center;
-    gap: var(--space-small);
-    
-    .fluent-icon {
-      color: var(--s-600);
-    }
-    
-    span {
-      font-size: var(--font-size-small);
-      color: var(--s-700);
-    }
-  }
-  
-  &__option:hover {
-    .fluent-icon {
-      color: var(--s-800);
-    }
-  }
 }
 </style>

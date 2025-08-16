@@ -135,7 +135,7 @@ export default {
         name: 'inbox_conversation',
         params: {
           accountId: this.$route.params.accountId,
-          conversationId: this.conversation.id,
+          conversation_id: this.conversation.id,
         },
       });
     },

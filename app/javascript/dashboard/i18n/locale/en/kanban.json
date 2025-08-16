@@ -36,7 +36,11 @@
       "STATUS_UPDATED": "Stage status updated",
       "STATUS_ERROR": "Failed to update stage status",
       "DELETE_SUCCESS": "Stage deleted successfully",
-      "DELETE_ERROR": "Failed to delete stage"
+      "DELETE_ERROR": "Failed to delete stage",
+      "CANCEL": "Cancel",
+      "CREATE": "Create",
+      "UPDATE": "Update",
+      "DELETE": "Delete"
     }
   }
 }

@@ -188,3 +188,190 @@ Provide a Kanban board where conversations are cards organized by pipeline stage
    - Global components (woot-*) don't need importing
    - Shared components from `dashboard/components/` or `shared/components/`
    - Always verify component exists before using
+
+### Chatwoot Design Patterns & Style Guide
+
+**Visual Identity:**
+- Clean, minimal interface with plenty of white space
+- Rounded corners (--border-radius-normal, --border-radius-small)
+- Subtle shadows (--shadow-small, --shadow-medium)
+- Modern flat design with subtle depth
+
+**Color System:**
+- Primary: Blue (`--w-500`, `--w-600`) for actions and highlights
+- Neutral: Gray scale (`--s-50` to `--s-900`) for text and backgrounds
+- Success: Green (`--g-500`) for positive actions
+- Warning: Yellow/Orange (`--y-500`) for cautions
+- Error: Red (`--r-500`) for destructive actions
+- Background: `--white` for cards, `--s-25` for page backgrounds
+
+**Typography:**
+- Font sizes: `--font-size-small`, `--font-size-default`, `--font-size-large`
+- Font weights: `--font-weight-medium`, `--font-weight-bold`
+- Line heights: Generous spacing for readability
+- Text colors: `--s-900` for headings, `--s-700` for body text, `--s-600` for secondary text
+
+**Spacing System:**
+- Consistent spacing using: `--space-small`, `--space-normal`, `--space-large`, `--space-mega`
+- Form elements: 16px (--space-normal) between fields
+- Card padding: 20px (--space-large) for comfort
+- Button spacing: 12px (--space-small) between buttons
+
+**Component Patterns:**
+
+1. **Cards & Containers:**
+   ```scss
+   .card {
+     background: var(--white);
+     border: 1px solid var(--s-200);
+     border-radius: var(--border-radius-normal);
+     padding: var(--space-large);
+     box-shadow: var(--shadow-small);
+   }
+   ```
+
+2. **Forms:**
+   - Use `woot-input` for text fields
+   - Label styling: `text-sm font-medium mb-1 block`
+   - Form groups: `mb-4` spacing between fields
+   - Help text: `text-xs text-gray-500 mt-1`
+   - Error states: red border and text
+
+3. **Buttons:**
+   - Primary: `woot-button` with `color-scheme="primary"`
+   - Secondary: `woot-button` with `variant="clear"`
+   - Destructive: `color-scheme="alert"`
+   - Sizes: `size="small"`, default, `size="large"`
+
+4. **Modals:**
+   - Use `woot-modal` component
+   - Header: Clear title with close action
+   - Body: Adequate padding and spacing
+   - Footer: Right-aligned buttons with proper spacing
+   - Max width: Reasonable for content (not full screen)
+
+5. **Lists & Tables:**
+   - Zebra striping for large datasets
+   - Hover states for interactive rows
+   - Consistent padding and alignment
+   - Sort indicators for sortable columns
+
+6. **Icons:**
+   - Use `fluent-icon` exclusively
+   - Standard sizes: 12, 16, 20, 24px
+   - Consistent color: `--s-600` for inactive, `--s-800` for active
+   - Proper alignment with text
+
+7. **Loading States:**
+   - Use `Spinner` component
+   - Center alignment with descriptive text
+   - Skeleton loaders for complex layouts
+
+8. **Empty States:**
+   - Large icon (48px) centered
+   - Clear heading and description
+   - Action button when applicable
+   - Friendly, helpful messaging
+
+**Layout Principles:**
+- Mobile-first responsive design
+- 12-column grid system where applicable
+- Consistent header heights and navigation
+- Sidebar navigation with clear hierarchy
+- Breadcrumbs for deep navigation
+
+**Interaction Patterns:**
+- Subtle hover states (opacity, transform, shadow changes)
+- Smooth transitions (0.2s ease)
+- Clear focus indicators for accessibility
+- Consistent click/tap targets (min 44px)
+
+**Data Display:**
+- Tables: Clean lines, adequate padding, sortable headers
+- Cards: Consistent structure with header, body, footer
+- Lists: Clear hierarchy and scannable content
+- Metrics: Prominent numbers with context
+
+**Always Reference:**
+- Check existing similar components first
+- Use Chatwoot's existing color picker, date picker, etc.
+- Follow established naming conventions
+- Test on both light and dark themes
+- Ensure accessibility (ARIA labels, keyboard navigation)
+
+## Phase 1 MVP Testing Checklist
+
+### Pre-Testing Setup:
+- [ ] Run `make setup` to install dependencies
+- [ ] Run `rails kanban:install` to setup kanban feature
+- [ ] Enable kanban for test account in Super Admin
+- [ ] Restart dev server after any changes
+
+### Super Admin Tests:
+- [ ] Navigate to `/super_admin` - should load without 500 error
+- [ ] Click "Kanban Setup" in navigation - should show setup page
+- [ ] Check accounts with kanban enabled counter
+- [ ] Test enable/disable kanban for accounts
+
+### Kanban Board Tests:
+- [ ] Navigate to `/app/accounts/:id/kanban` - should load board
+- [ ] Empty state: Shows "No Stages Configured" with proper button
+- [ ] Click "Configure Stages" - should navigate to stage manager
+- [ ] Default stages: New, Qualified, Proposal, Negotiation, Closed
+- [ ] Icons display correctly (sparkle, person-check, document, chat-multiple, checkmark-circle)
+- [ ] Colors show properly for each stage
+- [ ] Conversations load in appropriate stages
+- [ ] Drag and drop conversations between stages
+- [ ] Click conversation card - should open conversation view
+
+### Stage Manager Tests:
+- [ ] Navigate to `/app/accounts/:id/kanban/stages`
+- [ ] List all stages with drag handles
+- [ ] Click "Add Stage" - should open modal with form
+- [ ] Form fields: Name (required), Key (required), Color picker, Icon dropdown
+- [ ] Icon dropdown shows 15 options with proper labels
+- [ ] Create new stage - should show success message
+- [ ] Edit existing stage - should populate form correctly
+- [ ] Key field disabled when editing
+- [ ] Delete stage - should show confirmation modal
+- [ ] Toggle stage active/inactive status
+- [ ] Drag to reorder stages
+
+### Translation Tests:
+- [ ] All buttons show text (not COMMON.CANCEL, etc.)
+- [ ] All labels show proper text (not raw translation keys)
+- [ ] Error messages display correctly
+- [ ] Success messages display correctly
+
+### API Integration Tests:
+- [ ] Network tab shows correct API endpoints
+- [ ] GET /api/v1/accounts/:id/kanban/stages - loads stages
+- [ ] POST /api/v1/accounts/:id/kanban/stages - creates stage
+- [ ] PATCH /api/v1/accounts/:id/kanban/stages/:id - updates stage
+- [ ] DELETE /api/v1/accounts/:id/kanban/stages/:id - deletes stage
+- [ ] GET /api/v1/accounts/:id/kanban/board - loads board data
+- [ ] POST /api/v1/accounts/:id/kanban/board/move - moves conversations
+
+### Error Scenarios:
+- [ ] Try accessing kanban without feature enabled
+- [ ] Test with no conversations in account  
+- [ ] Test with large number of conversations
+- [ ] Test invalid stage data (empty name, duplicate key)
+- [ ] Test network failures (API timeouts)
+
+### Browser Console Tests:
+- [ ] No JavaScript errors in console
+- [ ] No Vue warnings about missing props/components
+- [ ] No 404s for missing assets/translations
+- [ ] No API 500 errors in network tab
+
+### Responsive Design Tests:
+- [ ] Desktop view (1200px+) - full board layout
+- [ ] Tablet view (768px-1199px) - scrollable columns
+- [ ] Mobile view (<768px) - single column stack
+
+### Accessibility Tests:
+- [ ] Keyboard navigation works for all interactive elements
+- [ ] Screen reader compatible (proper ARIA labels)
+- [ ] Focus indicators visible and logical
+- [ ] Color contrast meets standards
