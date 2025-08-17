@@ -1,4 +1,5 @@
 import { frontendURL } from '../../../helper/URLHelper';
+import { FEATURE_FLAGS } from '../../../featureFlags';
 
 const KanbanLayout = () => import('./Index.vue');
 const KanbanBoard = () => import('./Board.vue');
@@ -11,6 +12,7 @@ export const routes = [
     name: 'kanban_layout',
     meta: {
       permissions: ['administrator', 'agent'],
+      featureFlag: FEATURE_FLAGS.KANBAN,
     },
     children: [
       {
@@ -23,6 +25,7 @@ export const routes = [
         component: KanbanBoard,
         meta: {
           permissions: ['administrator', 'agent'],
+          featureFlag: FEATURE_FLAGS.KANBAN,
         },
       },
       {
@@ -31,6 +34,7 @@ export const routes = [
         component: KanbanStageManager,
         meta: {
           permissions: ['administrator'],
+          featureFlag: FEATURE_FLAGS.KANBAN,
         },
       },
     ],

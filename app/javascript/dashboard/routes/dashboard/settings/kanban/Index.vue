@@ -6,8 +6,8 @@ import { useAlert } from 'dashboard/composables';
 
 import draggable from 'vuedraggable';
 import Button from 'dashboard/components-next/button/Button.vue';
-import BaseSettingsHeader from '../settings/components/BaseSettingsHeader.vue';
-import SettingsLayout from '../settings/SettingsLayout.vue';
+import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import SettingsLayout from '../SettingsLayout.vue';
 
 const store = useStore();
 const getters = useStoreGetters();
@@ -68,10 +68,7 @@ const isLoading = computed(() => getters['kanban/isLoading'].value);
 // Computed properties
 const deleteMessage = computed(() => {
   if (!deletingStage.value) return '';
-  return t('KANBAN.STAGE_MANAGER.DELETE_MESSAGE', {
-    name: deletingStage.value.name,
-    count: deletingStage.value.conversations_count || 0,
-  });
+  return deletingStage.value.name;
 });
 
 // Watchers
@@ -237,9 +234,10 @@ onMounted(() => {
   >
     <template #header>
       <BaseSettingsHeader
-        :title="$t('KANBAN.STAGE_MANAGER.TITLE')"
-        :description="$t('KANBAN.STAGE_MANAGER.DESCRIPTION')"
-        feature-name="kanban_stages"
+        :title="$t('KANBAN.SETTINGS.TITLE')"
+        :description="$t('KANBAN.SETTINGS.DESCRIPTION')"
+        :link-text="$t('KANBAN.SETTINGS.LEARN_MORE')"
+        feature-name="kanban"
       >
         <template #actions>
           <Button
@@ -252,12 +250,12 @@ onMounted(() => {
     </template>
     
     <template #body>
-      <div class="stage-manager__content">
+      <div class="kanban-settings">
         <draggable
           v-model="localStages"
           :animation="200"
           handle=".stage-item__handle"
-          class="stage-manager__list"
+          class="kanban-settings__list"
           @end="handleReorder"
         >
           <template #item="{ element }">
@@ -327,59 +325,63 @@ onMounted(() => {
       v-model:show="showStageModal"
       :on-close="closeStageModal"
     >
-      <div class="modal-content">
+      <div class="flex flex-col h-auto overflow-auto">
         <woot-modal-header
           :header-title="editingStage ? $t('KANBAN.STAGE_MANAGER.EDIT_STAGE') : $t('KANBAN.STAGE_MANAGER.CREATE_STAGE')"
           :header-content="$t('KANBAN.STAGE_MANAGER.MODAL_DESCRIPTION')"
         />
         
-        <form @submit.prevent="saveStage" class="stage-form">
+        <form @submit.prevent="saveStage" class="flex flex-wrap mx-0">
           <woot-input
             v-model="stageForm.name"
+            :class="{ error: errors.name }"
+            class="w-full"
             :label="$t('KANBAN.STAGE_MANAGER.STAGE_NAME')"
             :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_NAME_PLACEHOLDER')"
             :error="errors.name"
-            class="mb-4"
+            data-testid="stage-name"
             required
           />
           
-          <div class="form-group">
-            <label class="form-label">
+          <div class="w-full">
+            <label>
               {{ $t('KANBAN.STAGE_MANAGER.STAGE_COLOR') }}
+              <woot-color-picker v-model="stageForm.color" />
             </label>
-            <woot-color-picker v-model="stageForm.color" />
           </div>
           
-          <div class="form-group">
-            <label class="form-label">
+          <div class="w-full">
+            <label>
               {{ $t('KANBAN.STAGE_MANAGER.STAGE_ICON') }}
-            </label>
-            <woot-input
-              type="select"
-              v-model="stageForm.icon"
-              :placeholder="$t('KANBAN.STAGE_MANAGER.STAGE_ICON_PLACEHOLDER')"
-            >
-              <option
-                v-for="icon in iconOptions"
-                :key="icon.value"
-                :value="icon.value"
+              <select
+                v-model="stageForm.icon"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {{ icon.label }}
-              </option>
-            </woot-input>
+                <option
+                  v-for="icon in iconOptions"
+                  :key="icon.value"
+                  :value="icon.value"
+                >
+                  {{ icon.label }}
+                </option>
+              </select>
+            </label>
           </div>
           
-          <div class="modal-footer">
+          <div class="flex items-center justify-end w-full gap-2 px-0 py-2">
             <Button
-              slate
               faded
+              slate
+              type="reset"
               :label="$t('KANBAN.STAGE_MANAGER.CANCEL')"
-              @click="closeStageModal"
+              @click.prevent="closeStageModal"
             />
             <Button
               type="submit"
-              :is-loading="isSaving"
+              data-testid="stage-submit"
               :label="editingStage ? $t('KANBAN.STAGE_MANAGER.UPDATE') : $t('KANBAN.STAGE_MANAGER.CREATE')"
+              :disabled="!stageForm.name || isSaving"
+              :is-loading="isSaving"
             />
           </div>
         </form>
@@ -401,11 +403,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.stage-manager {
-  &__content {
-    padding: 0;
-  }
-  
+.kanban-settings {
   &__list {
     display: flex;
     flex-direction: column;
@@ -534,33 +532,6 @@ onMounted(() => {
     min-width: 80px;
     justify-content: flex-end;
   }
-}
-
-.stage-form {
-  .form-group {
-    margin-bottom: var(--space-large);
-    
-    .form-label {
-      display: block;
-      margin-bottom: var(--space-small);
-      font-size: var(--font-size-default);
-      font-weight: var(--font-weight-medium);
-      color: var(--s-800);
-    }
-  }
-}
-
-.modal-content {
-  padding: 0;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-normal);
-  margin-top: var(--space-mega);
-  padding-top: var(--space-large);
-  border-top: 1px solid var(--s-200);
 }
 
 // Responsive design

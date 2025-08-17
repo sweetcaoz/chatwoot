@@ -197,9 +197,8 @@ Rails.application.routes.draw do
                 post :reorder
               end
             end
-            resource :board, only: [:index] do
-              post :move
-            end
+            get :board, to: 'board#index'
+            post 'board/move', to: 'board#move'
           end
 
           resources :notifications, only: [:index, :update, :destroy] do

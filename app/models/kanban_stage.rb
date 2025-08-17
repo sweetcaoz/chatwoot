@@ -18,11 +18,11 @@ class KanbanStage < ApplicationRecord
 
   DEFAULT_BOARD_KEY = 'sales'.freeze
   DEFAULT_STAGES = [
-    { key: 'new', name: 'New', color: '#0EA5E9', icon: 'sparkles', position: 0 },
-    { key: 'qualified', name: 'Qualified', color: '#8B5CF6', icon: 'user-check', position: 1 },
-    { key: 'proposal', name: 'Proposal', color: '#F59E0B', icon: 'document-text', position: 2 },
-    { key: 'negotiation', name: 'Negotiation', color: '#10B981', icon: 'chat-bubble-left-right', position: 3 },
-    { key: 'closed', name: 'Closed', color: '#6B7280', icon: 'check-circle', position: 4 }
+    { key: 'new', name: 'New', color: '#0EA5E9', icon: 'sparkle', position: 0 },
+    { key: 'qualified', name: 'Qualified', color: '#8B5CF6', icon: 'person-check', position: 1 },
+    { key: 'proposal', name: 'Proposal', color: '#F59E0B', icon: 'document', position: 2 },
+    { key: 'negotiation', name: 'Negotiation', color: '#10B981', icon: 'chat-multiple', position: 3 },
+    { key: 'closed', name: 'Closed', color: '#6B7280', icon: 'checkmark-circle', position: 4 }
   ].freeze
 
   def self.create_default_stages_for_account(account)

@@ -1,0 +1,102 @@
+{
+  "KANBAN": {
+    "TITLE": "Kanban Board",
+    "SUBTITLE": "Manage conversations in a visual pipeline",
+    "LOADING": "Loading board...",
+    "NO_STAGES": "No Stages Configured",
+    "NO_STAGES_DESCRIPTION": "Configure stages to start using the Kanban board",
+    "CREATE_STAGES": "Configure Stages",
+    "MANAGE_STAGES": "Manage Stages",
+    "COLUMN_EMPTY": "No conversations in this stage",
+    "NO_SUBJECT": "No subject",
+    "MOVE_ERROR": "Failed to move conversation",
+    "FILTERS": {
+      "STATUS": {
+        "LABEL": "Status",
+        "PLACEHOLDER": "Filter by status",
+        "OPEN": "Open",
+        "PENDING": "Pending", 
+        "RESOLVED": "Resolved"
+      },
+      "PRIORITY": {
+        "LABEL": "Priority",
+        "PLACEHOLDER": "Filter by priority",
+        "URGENT": "Urgent",
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low"
+      },
+      "CHANNELS": {
+        "LABEL": "Channels",
+        "PLACEHOLDER": "Filter by channel",
+        "WEB_WIDGET": "Website Chat",
+        "FACEBOOK": "Facebook",
+        "INSTAGRAM": "Instagram",
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "Email"
+      },
+      "ASSIGNEE": {
+        "LABEL": "Assignee",
+        "PLACEHOLDER": "Filter by agent",
+        "ALL": "All agents"
+      },
+      "SORT": {
+        "LAST_ACTIVITY": "Last Activity",
+        "CREATED_DATE": "Created Date",
+        "PRIORITY": "Priority"
+      },
+      "ACTIVE_COUNT": "{count} filters active",
+      "CLEAR_ALL": "Clear filters",
+      "TOTAL_CONVERSATIONS": "{count} conversations"
+    },
+    "CARD": {
+      "UNKNOWN_CONTACT": "Unknown Contact",
+      "UNASSIGNED": "Unassigned",
+      "QUICK_REPLY": "Quick Reply",
+      "ASSIGN": "Assign"
+    },
+    "STAGE_MANAGER": {
+      "TITLE": "Manage Kanban Stages",
+      "DESCRIPTION": "Configure workflow stages for your kanban board",
+      "ADD_STAGE": "Add Stage",
+      "EDIT_STAGE": "Edit Stage",
+      "CREATE_STAGE": "Create Stage",
+      "KEY": "Key",
+      "CONVERSATIONS": "conversations",
+      "STAGE_NAME": "Stage Name",
+      "STAGE_NAME_PLACEHOLDER": "e.g., New, In Progress, Done",
+      "STAGE_KEY": "Stage Key (cannot be changed)",
+      "STAGE_KEY_PLACEHOLDER": "e.g., new, in_progress, done",
+      "STAGE_COLOR": "Stage Color",
+      "STAGE_ICON": "Stage Icon",
+      "STAGE_ICON_PLACEHOLDER": "Choose an icon for this stage",
+      "DELETE_TITLE": "Delete Stage",
+      "DELETE_MESSAGE": "Are you sure you want to delete the stage '%{name}'? It has %{count} conversations that will be moved to the default stage.",
+      "NAME_REQUIRED": "Stage name is required",
+      "KEY_REQUIRED": "Stage key is required",
+      "REORDER_SUCCESS": "Stages reordered successfully",
+      "REORDER_ERROR": "Failed to reorder stages",
+      "UPDATE_SUCCESS": "Stage updated successfully",
+      "CREATE_SUCCESS": "Stage created successfully",
+      "SAVE_ERROR": "Failed to save stage",
+      "STATUS_UPDATED": "Stage status updated",
+      "STATUS_ERROR": "Failed to update stage status",
+      "DELETE_SUCCESS": "Stage deleted successfully",
+      "DELETE_ERROR": "Failed to delete stage",
+      "CANCEL": "Cancel",
+      "CREATE": "Create", 
+      "UPDATE": "Update",
+      "DELETE": "Delete",
+      "KEY_READONLY": "Key cannot be changed after creation",
+      "KEY_AUTO_GENERATED": "Auto-generated from stage name",
+      "LOADING": "Loading stages...",
+      "NO_STAGES": "No stages configured yet",
+      "MODAL_DESCRIPTION": "Configure workflow stages for your kanban board"
+    },
+    "SETTINGS": {
+      "TITLE": "Kanban Stages",
+      "DESCRIPTION": "Configure workflow stages for your kanban board",
+      "LEARN_MORE": "Learn more about Kanban"
+    }
+  }
+}

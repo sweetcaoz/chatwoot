@@ -1,16 +1,25 @@
 class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
+  before_action :set_account, only: [:enable_for_account, :disable_for_account]
+  
   def index
     @dependency_status = KanbanDependencyService.check_all_dependencies
-    @enabled_accounts_count = Account.where(feature_kanban: true).count
+    @enabled_accounts_count = Account.where("feature_flags & ? > 0", Account.flag_mapping[:feature_kanban]).count
     @total_accounts = Account.count
   end
 
   def install_dependencies
     begin
-      # Run migration
+      # Run migration using proper Rails migration
       if params[:run_migration] == 'true'
-        ActiveRecord::Base.connection.execute(migration_sql)
-        flash[:notice] = 'Migration completed successfully'
+        # Check if migration needs to be run
+        unless ActiveRecord::Base.connection.table_exists?('kanban_stages')
+          # Run pending migrations that include kanban
+          Rails.application.load_tasks
+          Rake::Task['db:migrate'].invoke
+          flash[:notice] = 'Migration completed successfully'
+        else
+          flash[:notice] = 'Migration already completed'
+        end
       end
 
       # NPM packages need to be installed manually
@@ -38,63 +47,60 @@ class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
   end
 
   def enable_for_account
-    account = Account.find(params[:account_id])
-    account.enable_features!(:kanban)
+    @account.enable_features!(:kanban)
     
     # Create default stages when enabling for the first time
-    if account.kanban_stages.empty?
-      KanbanStage.create_default_stages_for_account(account)
+    if @account.kanban_stages.empty?
+      KanbanStage.create_default_stages_for_account(@account)
     end
     
-    flash[:notice] = "Kanban enabled for #{account.name}"
+    flash[:notice] = "Kanban enabled for #{@account.name}"
+    redirect_to super_admin_kanban_setup_index_path
+  rescue StandardError => e
+    flash[:error] = "Failed to enable Kanban: #{e.message}"
     redirect_to super_admin_kanban_setup_index_path
   end
 
   def disable_for_account
-    account = Account.find(params[:account_id])
-    account.disable_features!(:kanban)
-    flash[:notice] = "Kanban disabled for #{account.name}"
+    @account.disable_features!(:kanban)
+    flash[:notice] = "Kanban disabled for #{@account.name}"
+    redirect_to super_admin_kanban_setup_index_path
+  rescue StandardError => e
+    flash[:error] = "Failed to disable Kanban: #{e.message}"
     redirect_to super_admin_kanban_setup_index_path
   end
 
   def bulk_enable
-    account_ids = params[:account_ids] || []
+    account_ids = bulk_enable_params[:account_ids] || []
+    return redirect_to(super_admin_kanban_setup_index_path, alert: 'No accounts selected') if account_ids.empty?
+    
+    enabled_count = 0
     Account.where(id: account_ids).find_each do |account|
       account.enable_features!(:kanban)
       KanbanStage.create_default_stages_for_account(account) if account.kanban_stages.empty?
+      enabled_count += 1
     end
-    flash[:notice] = "Kanban enabled for #{account_ids.size} accounts"
+    
+    flash[:notice] = "Kanban enabled for #{enabled_count} accounts"
+    redirect_to super_admin_kanban_setup_index_path
+  rescue StandardError => e
+    flash[:error] = "Bulk enable failed: #{e.message}"
     redirect_to super_admin_kanban_setup_index_path
   end
 
   private
 
-  def migration_sql
-    <<-SQL
-      CREATE TABLE IF NOT EXISTS kanban_stages (
-        id BIGSERIAL PRIMARY KEY,
-        account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-        board_key VARCHAR(255) NOT NULL DEFAULT 'sales',
-        key VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        color VARCHAR(255),
-        icon VARCHAR(255),
-        position INTEGER NOT NULL DEFAULT 0,
-        active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP NOT NULL
-      );
-
-      CREATE UNIQUE INDEX IF NOT EXISTS index_kanban_stages_unique_key 
-        ON kanban_stages(account_id, board_key, key);
-      
-      CREATE INDEX IF NOT EXISTS index_kanban_stages_position 
-        ON kanban_stages(account_id, board_key, position);
-      
-      CREATE INDEX IF NOT EXISTS index_kanban_stages_active 
-        ON kanban_stages(account_id, board_key, active);
-    SQL
+  def set_account
+    @account = Account.find(params[:account_id])
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = 'Account not found'
+    redirect_to super_admin_kanban_setup_index_path
   end
+
+  def bulk_enable_params
+    params.permit(account_ids: [])
+  end
+
 
   def add_kanban_translations
     # This would add translations to the appropriate locale files

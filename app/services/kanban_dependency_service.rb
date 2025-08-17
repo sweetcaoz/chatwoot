@@ -44,9 +44,9 @@ class KanbanDependencyService
     end
 
     def check_translations
-      # Check if kanban translations file exists
-      File.exist?(Rails.root.join('config/locales/kanban_en.yml')) ||
-        I18n.exists?('en.KANBAN.TITLE')
+      # Check if frontend kanban translations file exists
+      frontend_translation_path = Rails.root.join('app/javascript/dashboard/i18n/locale/en/kanban.json')
+      File.exist?(frontend_translation_path)
     rescue StandardError => e
       Rails.logger.error "Kanban translations check failed: #{e.message}"
       false

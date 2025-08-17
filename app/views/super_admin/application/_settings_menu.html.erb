@@ -10,6 +10,15 @@
       </svg>
     </summary>
     <ul class="ml-4 mt-1">
+      <!-- Kanban Setup -->
+      <% kanban_url = super_admin_kanban_setup_index_path %>
+      <li class="px-4 mb-1">
+        <% text_class = current_page?(kanban_url) ? 'text-woot-500 bg-slate-25' : 'text-slate-800' %>
+        <%= link_to kanban_url, class: text_class + ' -ml-1 flex items-center px-2 py-1.5 hover:text-woot-500 hover:bg-slate-25 rounded-lg' do %>
+          <span class="ml-2 text-sm">Kanban Setup</span>
+        <% end %>
+      </li>
+      
       <% settings_pages.each do |_feature_key, attrs| %>
         <% url = super_admin_app_config_url(config: attrs['config_key']) %>
         <li class="px-4 mb-1">

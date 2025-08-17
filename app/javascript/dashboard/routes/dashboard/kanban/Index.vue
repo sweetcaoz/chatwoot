@@ -3,12 +3,11 @@
     <div class="kanban-header">
       <div class="kanban-header__title">
         <h2 class="kanban-title">{{ $t('KANBAN.TITLE') }}</h2>
-        <p class="kanban-subtitle">{{ $t('KANBAN.SUBTITLE') }}</p>
       </div>
       <div class="kanban-header__actions">
         <router-link
           v-if="isAdmin"
-          :to="{ name: 'kanban_stages' }"
+          :to="{ name: 'kanban_settings_list' }"
           class="kanban-settings-link"
         >
           <fluent-icon icon="settings" size="16" />
@@ -41,24 +40,26 @@ export default {
 .kanban-layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: var(--s-50);
+  height: 100vh;
+  background-color: var(--s-25);
 }
 
 .kanban-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-normal) var(--space-large);
+  padding: var(--space-large) var(--space-mega);
   background-color: var(--white);
   border-bottom: 1px solid var(--s-100);
+  box-shadow: var(--shadow-small);
 
   &__title {
     .kanban-title {
       margin: 0;
-      font-size: var(--font-size-large);
+      font-size: var(--font-size-mega);
       font-weight: var(--font-weight-bold);
       color: var(--s-900);
+      letter-spacing: -0.02em;
     }
 
     .kanban-subtitle {
@@ -72,19 +73,21 @@ export default {
     .kanban-settings-link {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-micro);
-      padding: var(--space-small) var(--space-normal);
+      gap: var(--space-small);
+      padding: var(--space-normal) var(--space-large);
       border-radius: var(--border-radius-normal);
-      background-color: var(--s-50);
-      color: var(--s-700);
+      background-color: var(--w-500);
+      color: var(--white);
       text-decoration: none;
-      font-size: var(--font-size-small);
+      font-size: var(--font-size-default);
       font-weight: var(--font-weight-medium);
       transition: all 0.2s ease;
+      box-shadow: var(--shadow-small);
 
       &:hover {
-        background-color: var(--s-100);
-        color: var(--s-900);
+        background-color: var(--w-600);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-medium);
       }
     }
   }
