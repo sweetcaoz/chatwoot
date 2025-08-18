@@ -22,9 +22,9 @@ class SuperAdmin::KanbanSetupController < SuperAdmin::ApplicationController
         end
       end
 
-      # NPM packages need to be installed manually
+      # No NPM packages needed for HTML5 implementation
       if params[:npm_command]
-        flash[:warning] = 'Please run manually in terminal: npm install vuedraggable@next'
+        flash[:notice] = 'No NPM packages required - using native HTML5 drag-and-drop'
       end
 
       # Add translations

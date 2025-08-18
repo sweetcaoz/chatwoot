@@ -2,6 +2,7 @@
   <div 
     ref="columnElement"
     class="kanban-column"
+    :class="{ 'kanban-column--moving': isMoving }"
     :style="columnStyle"
     @dragover.prevent
     @drop="handleDrop"
@@ -27,23 +28,42 @@
         <p>{{ $t('KANBAN.COLUMN_EMPTY') }}</p>
       </div>
       
-      <draggable
+      <div 
         v-else
-        v-model="localConversations"
-        :group="{ name: 'conversations' }"
-        :animation="200"
-        :disabled="isMoving"
         class="kanban-column__cards"
-        @change="handleChange"
+        :class="{ 'kanban-column__cards--drag-over': isDraggedOver }"
+        @dragover.prevent="handleDragOver"
+        @dragenter.prevent="handleDragEnter"
+        @dragleave="handleDragLeave"
+        @drop="handleColumnDrop"
       >
-        <template #item="{ element }">
-          <KanbanCard
-            :key="element.id"
-            :conversation="element"
-            :is-moving="isMoving"
-          />
+        <template v-for="(conversation, index) in localConversations" :key="conversation.id">
+          <!-- Drop indicator -->
+          <div 
+            v-if="dragOverIndex === index"
+            class="kanban-column__drop-indicator"
+          ></div>
+          
+          <div
+            :draggable="!isMoving"
+            class="kanban-conversation-item"
+            :class="{ 'dragging': conversation.isDragging }"
+            @dragstart="handleConversationDragStart($event, conversation, index)"
+            @dragend="handleConversationDragEnd($event, conversation)"
+          >
+            <KanbanCard
+              :conversation="conversation"
+              :is-moving="isMoving"
+            />
+          </div>
         </template>
-      </draggable>
+        
+        <!-- Final drop indicator -->
+        <div 
+          v-if="dragOverIndex === localConversations.length"
+          class="kanban-column__drop-indicator"
+        ></div>
+      </div>
     </div>
   </div>
 </template>
@@ -51,7 +71,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import draggable from 'vuedraggable';
 import KanbanCard from './KanbanCard.vue';
 
 const props = defineProps({
@@ -77,8 +96,17 @@ const emit = defineEmits(['drop']);
 const { t } = useI18n();
 
 // Local state
-const localConversations = ref([...props.conversations]);
 const columnElement = ref(null);
+const dragOverIndex = ref(-1);
+const isDraggedOver = ref(false);
+
+// Reactive local conversations for immediate UI updates
+const localConversations = ref([...props.conversations]);
+
+// Watch for props changes to sync local state
+watch(() => props.conversations, (newConversations) => {
+  localConversations.value = [...newConversations];
+}, { deep: true });
 
 // Dynamic column styling with user-chosen colors
 const columnStyle = computed(() => {
@@ -93,96 +121,143 @@ const columnStyle = computed(() => {
 
 // Enhanced conversation count with filter info
 const conversationCount = computed(() => {
-  const total = props.conversations.length;
-  const filtered = localConversations.value.length;
-  return total === filtered ? total : `${filtered}/${total}`;
+  return props.conversations.length;
 });
 
-// Watch for conversation changes
-watch(
-  () => props.conversations,
-  (newVal) => {
-    localConversations.value = [...newVal];
-  },
-  { deep: true }
-);
-
-// Drag and drop handlers
-const handleDrop = (event) => {
+// HTML5 Drag and Drop Handlers
+const handleDragEnter = (event) => {
   event.preventDefault();
-  const conversationId = event.dataTransfer.getData('conversationId');
-  const fromStage = event.dataTransfer.getData('fromStage');
-  
-  if (fromStage !== props.stage.key) {
-    emit('drop', {
-      conversationId: parseInt(conversationId, 10),
-      fromStage,
-      toStage: props.stage.key,
-      position: calculateDropPosition(event),
-    });
+  isDraggedOver.value = true;
+};
+
+const handleDragLeave = (event) => {
+  // Only reset if leaving the column entirely
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    isDraggedOver.value = false;
+    dragOverIndex.value = -1;
   }
 };
 
-const handleChange = (event) => {
-  if (event.added) {
-    const { element, newIndex } = event.added;
-    const position = calculatePosition(newIndex);
+const handleDragOver = (event) => {
+  event.preventDefault();
+  isDraggedOver.value = true;
+  
+  // Calculate insertion index based on mouse position
+  const cards = Array.from(event.currentTarget.querySelectorAll('.kanban-conversation-item'));
+  let insertIndex = cards.length;
+  
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const rect = card.getBoundingClientRect();
+    const cardMiddle = rect.top + rect.height / 2;
     
-    emit('drop', {
-      conversationId: element.id,
-      fromStage: null,
-      toStage: props.stage.key,
-      position,
-    });
-  } else if (event.moved) {
-    const { element, newIndex } = event.moved;
-    const position = calculatePosition(newIndex);
-    
-    emit('drop', {
-      conversationId: element.id,
-      fromStage: props.stage.key,
-      toStage: props.stage.key,
-      position,
-    });
+    if (event.clientY < cardMiddle) {
+      insertIndex = i;
+      break;
+    }
   }
+  
+  dragOverIndex.value = insertIndex;
+};
+
+const handleColumnDrop = (event) => {
+  event.preventDefault();
+  isDraggedOver.value = false;
+  
+  const conversationId = parseInt(event.dataTransfer.getData('conversationId'), 10);
+  const fromStage = event.dataTransfer.getData('fromStage');
+  const fromIndex = parseInt(event.dataTransfer.getData('fromIndex'), 10);
+  
+  if (!conversationId) return;
+  
+  const targetIndex = dragOverIndex.value;
+  dragOverIndex.value = -1;
+  
+  // Calculate position for API
+  const position = calculatePositionForAPI(targetIndex);
+  
+  emit('drop', {
+    conversationId,
+    fromStage,
+    toStage: props.stage.key,
+    position,
+  });
+};
+
+const handleConversationDragStart = (event, conversation, index) => {
+  if (props.isMoving) {
+    event.preventDefault();
+    return;
+  }
+  
+  // Set drag data
+  event.dataTransfer.setData('conversationId', conversation.id.toString());
+  event.dataTransfer.setData('fromStage', props.stage.key);
+  event.dataTransfer.setData('fromIndex', index.toString());
+  event.dataTransfer.effectAllowed = 'move';
+  
+  // Create custom drag image (reuse existing KanbanCard drag styling)
+  const dragImage = event.target.cloneNode(true);
+  dragImage.style.cssText = `
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+    width: ${event.target.offsetWidth}px;
+    height: ${event.target.offsetHeight}px;
+    transform: scale(0.95) rotate(3deg);
+    opacity: 0.9;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 9999;
+  `;
+  
+  document.body.appendChild(dragImage);
+  
+  const rect = event.target.getBoundingClientRect();
+  const offsetX = event.clientX - rect.left;
+  const offsetY = event.clientY - rect.top;
+  event.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+  
+  // Mark conversation as dragging for visual feedback
+  conversation.isDragging = true;
+  
+  // Clean up drag image
+  setTimeout(() => {
+    if (dragImage.parentNode) {
+      document.body.removeChild(dragImage);
+    }
+  }, 0);
+};
+
+const handleConversationDragEnd = (event, conversation) => {
+  conversation.isDragging = false;
+  isDraggedOver.value = false;
+  dragOverIndex.value = -1;
 };
 
 // Position calculation helpers
-const calculatePosition = (index) => {
+const calculatePositionForAPI = (targetIndex) => {
   const position = {};
+  const conversations = localConversations.value;
   
-  if (index === 0 && localConversations.value.length > 1) {
-    position.beforeId = localConversations.value[1].id;
-  } else if (index === localConversations.value.length - 1 && index > 0) {
-    position.afterId = localConversations.value[index - 1].id;
-  } else if (index > 0 && index < localConversations.value.length - 1) {
-    position.afterId = localConversations.value[index - 1].id;
-    position.beforeId = localConversations.value[index + 1].id;
+  if (targetIndex === 0 && conversations.length > 0) {
+    // Insert at beginning
+    position.beforeId = conversations[0].id;
+  } else if (targetIndex >= conversations.length) {
+    // Insert at end
+    if (conversations.length > 0) {
+      position.afterId = conversations[conversations.length - 1].id;
+    }
+  } else {
+    // Insert between conversations
+    if (targetIndex > 0) {
+      position.afterId = conversations[targetIndex - 1].id;
+    }
+    position.beforeId = conversations[targetIndex].id;
   }
   
   return position;
-};
-
-const calculateDropPosition = (event) => {
-  const cards = columnElement.value?.querySelectorAll('.kanban-card') || [];
-  let afterId = null;
-  let beforeId = null;
-  
-  cards.forEach((card, index) => {
-    const rect = card.getBoundingClientRect();
-    if (event.clientY < rect.top + rect.height / 2) {
-      if (index === 0) {
-        beforeId = parseInt(card.dataset.conversationId, 10);
-      }
-    } else {
-      afterId = parseInt(card.dataset.conversationId, 10);
-      if (cards[index + 1]) {
-        beforeId = parseInt(cards[index + 1].dataset.conversationId, 10);
-      }
-    }
-  });
-  
-  return { afterId, beforeId };
 };
 </script>
 
@@ -198,6 +273,28 @@ const calculateDropPosition = (event) => {
   border-radius: var(--border-radius-normal);
   border: 1px solid var(--s-100);
   box-shadow: var(--shadow-medium);
+  
+  &--moving {
+    pointer-events: none;
+    
+    .kanban-column__cards {
+      opacity: 0.8;
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      background-size: 200% 200%;
+      animation: shimmer 1.5s infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
   
   &__header {
     padding: var(--space-large);
@@ -288,6 +385,55 @@ const calculateDropPosition = (event) => {
     gap: var(--space-normal);
     min-height: 120px;
     padding-bottom: var(--space-normal);
+    position: relative;
+    
+    &--drag-over {
+      background-color: var(--column-accent);
+      border-radius: var(--border-radius-normal);
+    }
+  }
+  
+  &__drop-indicator {
+    height: 4px;
+    background: linear-gradient(90deg, var(--w-500) 0%, var(--w-400) 100%);
+    border-radius: var(--border-radius-full);
+    margin: var(--space-micro) 0;
+    opacity: 0.8;
+    box-shadow: 0 0 8px var(--w-300);
+    animation: pulse-glow 1s ease-in-out infinite alternate;
+  }
+}
+
+.kanban-conversation-item {
+  transition: all 0.2s ease;
+  
+  &.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes pulse-glow {
+  from {
+    opacity: 0.6;
+    transform: scaleY(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% -200%;
+  }
+  100% {
+    background-position: 200% 200%;
   }
 }
 </style>

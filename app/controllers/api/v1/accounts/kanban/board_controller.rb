@@ -11,7 +11,28 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
   end
 
   def move
-    @conversation = Current.account.conversations.find(params[:conversation_id])
+    @board_key = params[:board_key] || KanbanStage::DEFAULT_BOARD_KEY
+    
+    # Multi-tenant safety: ensure conversation belongs to current account
+    @conversation = Current.account.conversations
+                           .includes(:contact, :inbox, :assignee, :team, :labels)
+                           .find(params[:conversation_id])
+    
+    # Multi-tenant safety: ensure stage belongs to current account and board
+    target_stage = Current.account.kanban_stages
+                          .active
+                          .for_board(@board_key)
+                          .find_by(key: params[:stage_key])
+    
+    unless target_stage
+      available_stages = Current.account.kanban_stages.active.for_board(@board_key).pluck(:key)
+      Rails.logger.error("[KANBAN] Stage '#{params[:stage_key]}' not found for account #{Current.account.id}, board '#{@board_key}'. Available: #{available_stages}")
+      render json: { 
+        error: "Stage '#{params[:stage_key]}' not found",
+        available_stages: available_stages 
+      }, status: :not_found
+      return
+    end
     
     ActiveRecord::Base.transaction do
       update_conversation_stage
@@ -19,19 +40,30 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
     end
     
     broadcast_kanban_update
-    head :ok
+    
+    # Reload conversation to ensure we have the latest data
+    @conversation.reload
+    
+    # Return updated conversation data for smooth frontend sync
+    render json: { 
+      status: 'success', 
+      message: 'Conversation moved successfully',
+      conversation: format_single_conversation(@conversation)
+    }
   rescue ActiveRecord::RecordNotFound => e
-    render json: { error: 'Conversation not found' }, status: :not_found
+    Rails.logger.error("[KANBAN] Multi-tenant access violation or record not found: #{e.message}")
+    render json: { error: 'Conversation not found or access denied' }, status: :not_found
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.message }, status: :unprocessable_entity
   rescue StandardError => e
+    Rails.logger.error("[KANBAN] Unexpected error: #{e.class} - #{e.message}")
     render json: { error: 'Failed to move conversation' }, status: :internal_server_error
   end
 
   private
 
   def check_authorization
-    authorize(Current.account)
+    authorize(Current.account, :kanban_board?)
   end
 
   def debug_context
@@ -77,33 +109,42 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::BaseContro
 
   def fetch_stage_conversations(stage_key)
     Current.account.conversations
-           .includes(:contact, :inbox, :assignee, :team, :labels, :taggings)
+           .includes(:contact, :inbox, :assignee, :team, :labels)
            .where("custom_attributes ->> 'kanban_stage' = ?", stage_key)
            .select("conversations.*, 
-                    COALESCE((custom_attributes ->> 'kanban_position')::float, conversations.id * 1000.0) as kanban_position,
-                    (conversations.unread_incoming_messages_count > 0) as has_unread")
-           .order(Arel.sql('has_unread DESC, kanban_position ASC'))
+                    COALESCE((custom_attributes ->> 'kanban_position')::float, conversations.id * 1000.0) as kanban_position")
+           .order(Arel.sql('kanban_position ASC'))
            .limit(50)
   end
 
   def format_conversations(conversations)
-    conversations.map do |conversation|
-      {
-        id: conversation.id,
-        display_id: conversation.display_id,
-        contact: conversation.contact.attributes.slice('id', 'name', 'email', 'phone_number', 'avatar_url'),
-        inbox: conversation.inbox.attributes.slice('id', 'name', 'channel_type'),
-        assignee: conversation.assignee&.attributes&.slice('id', 'name', 'available_name', 'avatar_url'),
-        team: conversation.team&.attributes&.slice('id', 'name'),
-        status: conversation.status,
-        priority: conversation.priority,
-        labels: conversation.label_list,
-        unread_count: conversation.unread_incoming_messages_count,
-        kanban_position: conversation.kanban_position,
-        last_activity_at: conversation.last_activity_at,
-        created_at: conversation.created_at
-      }
-    end
+    conversations.map { |conversation| format_single_conversation(conversation) }
+      .sort_by { |conv| [-conv[:unread_count], conv[:kanban_position]] }
+  end
+
+  def format_single_conversation(conversation)
+    # Calculate unread count using the model method
+    unread_count = conversation.unread_incoming_messages.count
+    
+    {
+      id: conversation.id,
+      display_id: conversation.display_id,
+      contact: conversation.contact.attributes.slice('id', 'name', 'email', 'phone_number', 'avatar_url'),
+      inbox: conversation.inbox.attributes.slice('id', 'name', 'channel_type'),
+      assignee: conversation.assignee&.attributes&.slice('id', 'name', 'available_name', 'avatar_url'),
+      team: conversation.team&.attributes&.slice('id', 'name'),
+      status: conversation.status,
+      priority: conversation.priority,
+      labels: conversation.labels,
+      unread_count: unread_count,
+      kanban_position: conversation.respond_to?(:kanban_position) ? conversation.kanban_position : conversation.custom_attributes['kanban_position'],
+      last_activity_at: conversation.last_activity_at,
+      created_at: conversation.created_at,
+      custom_attributes: conversation.custom_attributes,
+      last_message: conversation.last_incoming_message ? {
+        content: conversation.last_incoming_message.content
+      } : nil
+    }
   end
 
   def update_conversation_stage

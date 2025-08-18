@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useStore, useStoreGetters } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 
-import draggable from 'vuedraggable';
+// Removed VueDraggable - using HTML5 drag-and-drop
 import Button from 'dashboard/components-next/button/Button.vue';
 import BaseSettingsHeader from '../settings/components/BaseSettingsHeader.vue';
 import SettingsLayout from '../settings/SettingsLayout.vue';
@@ -21,6 +21,10 @@ const editingStage = ref(null);
 const deletingStage = ref(null);
 const isSaving = ref(false);
 const errors = ref({});
+
+// Drag state
+const dragOverIndex = ref(-1);
+const isDragging = ref(false);
 
 // Form state
 const stageForm = ref({
@@ -222,6 +226,47 @@ const resetForm = () => {
   errors.value = {};
 };
 
+// HTML5 Drag and Drop for stage reordering
+const handleStageDragStart = (event, stage, index) => {
+  isDragging.value = true;
+  event.dataTransfer.setData('stageId', stage.id.toString());
+  event.dataTransfer.setData('fromIndex', index.toString());
+  event.dataTransfer.effectAllowed = 'move';
+  
+  // Visual feedback
+  event.target.style.opacity = '0.5';
+};
+
+const handleStageDragEnd = (event) => {
+  isDragging.value = false;
+  dragOverIndex.value = -1;
+  event.target.style.opacity = '';
+};
+
+const handleStageDragOver = (event, index) => {
+  event.preventDefault();
+  dragOverIndex.value = index;
+};
+
+const handleStageDrop = (event, targetIndex) => {
+  event.preventDefault();
+  
+  const fromIndex = parseInt(event.dataTransfer.getData('fromIndex'), 10);
+  const stageId = parseInt(event.dataTransfer.getData('stageId'), 10);
+  
+  if (fromIndex === targetIndex) return;
+  
+  // Reorder the stages locally
+  const stageToMove = localStages.value[fromIndex];
+  localStages.value.splice(fromIndex, 1);
+  localStages.value.splice(targetIndex, 0, stageToMove);
+  
+  // Save the new order
+  handleReorder();
+  
+  dragOverIndex.value = -1;
+};
+
 // Lifecycle
 onMounted(() => {
   fetchStagesData();
@@ -253,15 +298,23 @@ onMounted(() => {
     
     <template #body>
       <div class="stage-manager__content">
-        <draggable
-          v-model="localStages"
-          :animation="200"
-          handle=".stage-item__handle"
-          class="stage-manager__list"
-          @end="handleReorder"
-        >
-          <template #item="{ element }">
-            <div class="stage-item" :key="element.id">
+        <div class="stage-manager__list">
+          <template v-for="(stage, index) in localStages" :key="stage.id">
+            <!-- Drop indicator -->
+            <div 
+              v-if="dragOverIndex === index"
+              class="stage-manager__drop-indicator"
+            ></div>
+            
+            <div 
+              class="stage-item" 
+              :class="{ 'stage-item--drag-over': dragOverIndex === index }"
+              :draggable="true"
+              @dragstart="handleStageDragStart($event, stage, index)"
+              @dragend="handleStageDragEnd"
+              @dragover.prevent="handleStageDragOver($event, index)"
+              @drop="handleStageDrop($event, index)"
+            >
               <div class="stage-item__handle">
                 <fluent-icon icon="drag" size="16" />
               </div>
@@ -270,23 +323,23 @@ onMounted(() => {
                 <div class="stage-item__color">
                   <span 
                     class="stage-item__color-badge"
-                    :style="{ backgroundColor: element.color }"
+                    :style="{ backgroundColor: stage.color }"
                   />
                 </div>
                 
                 <div class="stage-item__icon">
-                  <fluent-icon :icon="element.icon || 'flag'" size="18" />
+                  <fluent-icon :icon="stage.icon || 'flag'" size="18" />
                 </div>
               </div>
               
               <div class="stage-item__info">
-                <h4>{{ element.name }}</h4>
-                <p>{{ element.key }}</p>
+                <h4>{{ stage.name }}</h4>
+                <p>{{ stage.key }}</p>
               </div>
               
               <div class="stage-item__stats">
                 <span class="stage-item__count">
-                  {{ element.conversations_count || 0 }}
+                  {{ stage.conversations_count || 0 }}
                 </span>
                 <span class="stage-item__count-label">
                   {{ $t('KANBAN.STAGE_MANAGER.CONVERSATIONS') }}
@@ -295,8 +348,8 @@ onMounted(() => {
               
               <div class="stage-item__status">
                 <woot-switch
-                  :value="element.active"
-                  @input="toggleStageStatus(element, $event)"
+                  :value="stage.active"
+                  @input="toggleStageStatus(stage, $event)"
                 />
               </div>
               
@@ -306,19 +359,25 @@ onMounted(() => {
                   slate
                   xs
                   faded
-                  @click="editStage(element)"
+                  @click="editStage(stage)"
                 />
                 <Button
                   icon="i-lucide-trash-2"
                   ruby
                   xs
                   faded
-                  @click="confirmDelete(element)"
+                  @click="confirmDelete(stage)"
                 />
               </div>
             </div>
           </template>
-        </draggable>
+          
+          <!-- Final drop indicator -->
+          <div 
+            v-if="dragOverIndex === localStages.length"
+            class="stage-manager__drop-indicator"
+          ></div>
+        </div>
       </div>
     </template>
     
@@ -609,6 +668,35 @@ onMounted(() => {
     &__actions {
       justify-content: center;
     }
+  }
+}
+
+// HTML5 drag-and-drop styles
+.stage-manager {
+  &__drop-indicator {
+    height: 3px;
+    background: linear-gradient(90deg, var(--w-500) 0%, var(--w-400) 100%);
+    border-radius: var(--border-radius-full);
+    margin: var(--space-small) 0;
+    opacity: 0.8;
+    box-shadow: 0 0 6px var(--w-300);
+    animation: pulse-glow 1s ease-in-out infinite alternate;
+  }
+}
+
+.stage-item--drag-over {
+  background-color: var(--w-25);
+  border-color: var(--w-300);
+}
+
+@keyframes pulse-glow {
+  from {
+    opacity: 0.6;
+    transform: scaleY(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
   }
 }
 </style>

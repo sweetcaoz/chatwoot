@@ -38,22 +38,18 @@
           <% end %>
         </div>
 
-        <!-- NPM Packages Status -->
-        <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg <%= @dependency_status[:npm_packages] ? 'bg-green-100/30' : 'bg-yellow-100/30' %>">
+        <!-- Drag & Drop Support Status -->
+        <div class="flex items-center justify-between p-4 outline outline-1 outline-n-container rounded-lg bg-green-100/30">
           <div class="flex items-center">
-            <span class="<%= @dependency_status[:npm_packages] ? 'text-green-600' : 'text-yellow-600' %> text-lg mr-3">
-              <%= @dependency_status[:npm_packages] ? '✅' : '⚠️' %>
-            </span>
+            <span class="text-green-600 text-lg mr-3">✅</span>
             <div>
-              <span class="text-n-slate-12 font-medium">NPM Package (vuedraggable)</span>
-              <p class="text-n-slate-11 text-sm m-0">Required for drag-and-drop functionality</p>
+              <span class="text-n-slate-12 font-medium">Drag & Drop Support</span>
+              <p class="text-n-slate-11 text-sm m-0">Using native HTML5 drag-and-drop (no packages required)</p>
             </div>
           </div>
-          <% unless @dependency_status[:npm_packages] %>
-            <div class="text-sm text-n-slate-11">
-              Run in terminal: <code class="bg-n-slate-50 text-n-slate-12 px-2 py-1 rounded font-mono text-xs">npm install vuedraggable@next</code>
-            </div>
-          <% end %>
+          <div class="text-sm text-green-800 font-medium">
+            Built-in browser support
+          </div>
         </div>
 
         <!-- Translations Status -->

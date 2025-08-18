@@ -32,12 +32,9 @@ class KanbanDependencyService
     end
 
     def check_npm_packages
-      package_json_path = Rails.root.join('package.json')
-      return false unless File.exist?(package_json_path)
-      
-      package_json = JSON.parse(File.read(package_json_path))
-      dependencies = package_json['dependencies'] || {}
-      dependencies.key?('vuedraggable')
+      # HTML5 drag-and-drop requires no external packages
+      # Always return true since drag functionality is built into browsers
+      true
     rescue StandardError => e
       Rails.logger.error "Kanban npm check failed: #{e.message}"
       false

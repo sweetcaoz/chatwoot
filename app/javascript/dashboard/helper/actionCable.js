@@ -34,6 +34,9 @@ class ActionCableConnector extends BaseActionCableConnector {
       'conversation.updated': this.onConversationUpdated,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
+      // Kanban-specific events
+      'kanban.stage.updated': this.onKanbanStageUpdated,
+      'kanban.conversation.moved': this.onKanbanConversationMoved,
     };
   }
 
@@ -199,6 +202,15 @@ class ActionCableConnector extends BaseActionCableConnector {
     this.app.$store.dispatch('labels/revalidate', { newKey: keys.label });
     this.app.$store.dispatch('inboxes/revalidate', { newKey: keys.inbox });
     this.app.$store.dispatch('teams/revalidate', { newKey: keys.team });
+  };
+
+  // Kanban event handlers
+  onKanbanStageUpdated = data => {
+    this.app.$store.dispatch('kanban/updateStageFromSocket', data);
+  };
+
+  onKanbanConversationMoved = data => {
+    this.app.$store.dispatch('kanban/updateConversationPositionFromSocket', data);
   };
 }
 

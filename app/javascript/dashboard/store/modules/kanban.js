@@ -16,6 +16,9 @@ export const getters = {
   getConversationsByStage: state => stageKey => {
     return state.conversations[stageKey] || [];
   },
+  getAllConversations: state => {
+    return Object.values(state.conversations).flat();
+  },
   getBoardKey: state => state.boardKey,
   isLoading: state => state.isLoading,
   isMoving: state => state.isMoving,
@@ -84,10 +87,13 @@ export const actions = {
     }
   },
 
-  async moveConversation({ commit, state }, { conversationId, fromStage, toStage, position }) {
+  async moveConversation({ commit, dispatch, state }, { conversationId, fromStage, toStage, position }) {
     commit('setMoving', true);
     
-    // Optimistically update the UI
+    // Store original state for potential rollback
+    const originalState = { conversationId, fromStage, toStage, position };
+    
+    // Optimistically update the UI for immediate feedback
     commit('moveConversationOptimistic', { conversationId, fromStage, toStage, position });
     
     try {
@@ -96,29 +102,57 @@ export const actions = {
       if (position.beforeId) positionParams.before_id = position.beforeId;
       if (position.absolutePosition) positionParams.absolute_position = position.absolutePosition;
       
-      await kanbanAPI.moveConversation(conversationId, toStage, positionParams);
+      // Make API call
+      const response = await kanbanAPI.moveConversation(conversationId, toStage, positionParams);
+      
+      // Success: Let the optimistic update stand, just force a reactivity refresh
+      // This ensures Vue detects the changes and re-renders the UI
+      commit('triggerReactivityUpdate');
+      
     } catch (error) {
-      // Revert on error
-      commit('moveConversationOptimistic', { conversationId, fromStage: toStage, toStage: fromStage, position });
+      // Revert optimistic update on error
+      commit('moveConversationOptimistic', { 
+        conversationId, 
+        fromStage: toStage, 
+        toStage: fromStage, 
+        position: originalState.position 
+      });
       throw error;
     } finally {
       commit('setMoving', false);
     }
   },
 
-  subscribeToKanbanUpdates({ commit, state, rootState }) {
-    const accountId = rootState.auth?.user?.account?.id || 1;
-    const channel = `kanban_${accountId}_${state.boardKey}`;
-    
-    window.chatwootPubsubToken.subscribe(channel, event => {
-      if (event.event === 'conversation_moved') {
-        commit('updateConversationPosition', {
-          conversationId: event.conversation_id,
-          stageKey: event.stage_key,
-          position: event.position,
-        });
-      }
+  // WebSocket event handlers called by ActionCable
+  updateStageFromSocket({ commit }, data) {
+    commit('updateStage', data);
+  },
+
+  updateConversationPositionFromSocket({ commit }, data) {
+    commit('updateConversationPosition', {
+      conversationId: data.conversation_id,
+      stageKey: data.stage_key,
+      position: data.position,
     });
+  },
+
+  updateConversationFromSocket({ commit, state }, data) {
+    // Update conversation data if it exists in our current board
+    if (data.custom_attributes?.kanban_stage) {
+      commit('updateConversationData', data);
+    }
+  },
+
+  addConversationFromSocket({ commit, state }, data) {
+    // Add new conversation to appropriate stage if it has kanban data
+    if (data.custom_attributes?.kanban_stage) {
+      commit('addConversation', data);
+    }
+  },
+
+  cleanup({ commit }) {
+    // Clear any subscriptions or timers
+    commit('resetState');
   },
 };
 
@@ -218,6 +252,84 @@ export const mutations = {
         return a.kanban_position - b.kanban_position;
       });
     }
+  },
+
+  updateStage(state, stageData) {
+    const index = state.stages.findIndex(stage => stage.id === stageData.id);
+    if (index > -1) {
+      state.stages.splice(index, 1, stageData);
+    }
+  },
+
+  updateConversationData(state, conversationData) {
+    // Find and update conversation across all stages
+    Object.keys(state.conversations).forEach(stageKey => {
+      const index = state.conversations[stageKey].findIndex(c => c.id === conversationData.id);
+      if (index > -1) {
+        state.conversations[stageKey][index] = { ...state.conversations[stageKey][index], ...conversationData };
+      }
+    });
+  },
+
+  addConversation(state, conversation) {
+    const stageKey = conversation.custom_attributes?.kanban_stage;
+    if (stageKey && !state.conversations[stageKey]) {
+      state.conversations[stageKey] = [];
+    }
+    if (stageKey) {
+      // Check if conversation already exists
+      const exists = state.conversations[stageKey].some(c => c.id === conversation.id);
+      if (!exists) {
+        state.conversations[stageKey].push(conversation);
+      }
+    }
+  },
+
+  updateConversationFromMove(state, { conversation, targetStage }) {
+    // After optimistic update, conversation is already in target stage
+    // Find and update it there with the latest server data
+    if (state.conversations[targetStage]) {
+      const index = state.conversations[targetStage].findIndex(c => c.id === conversation.id);
+      if (index > -1) {
+        // Update with latest server data (position, custom_attributes, etc.)
+        state.conversations[targetStage][index] = { 
+          ...state.conversations[targetStage][index], 
+          ...conversation,
+          // Ensure stage consistency
+          custom_attributes: {
+            ...state.conversations[targetStage][index].custom_attributes,
+            ...conversation.custom_attributes,
+            kanban_stage: targetStage
+          }
+        };
+      }
+    }
+  },
+
+  syncStageConversations(state, { stageKey, conversations }) {
+    // Replace conversations in specific stage with server-ordered data
+    // This handles position corrections without full board reload
+    if (state.conversations[stageKey] && conversations) {
+      state.conversations[stageKey] = conversations;
+    }
+  },
+
+  triggerReactivityUpdate(state) {
+    // Force Vue reactivity by creating new object references
+    // This ensures UI updates even when deep nested properties change
+    const newConversations = {};
+    Object.keys(state.conversations).forEach(stageKey => {
+      newConversations[stageKey] = [...state.conversations[stageKey]];
+    });
+    state.conversations = newConversations;
+  },
+
+  resetState(state) {
+    state.stages = [];
+    state.conversations = {};
+    state.isLoading = false;
+    state.isMoving = false;
+    state.error = null;
   },
 };
 
