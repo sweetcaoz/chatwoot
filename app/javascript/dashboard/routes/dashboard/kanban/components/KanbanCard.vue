@@ -139,7 +139,7 @@ const contactDisplayName = computed(() => {
 });
 
 const lastMessagePreview = computed(() => {
-  const lastMessage = props.conversation.last_non_activity_message;
+  const lastMessage = props.conversation.last_message;
   if (!lastMessage?.content) return null;
   
   // Extract text from HTML content and truncate
@@ -203,7 +203,44 @@ const handleDragStart = (event) => {
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('conversationId', props.conversation.id.toString());
   event.dataTransfer.setData('fromStage', route.params.stageKey || 'unknown');
+  
+  // Modern drag approach: Use real card with elegant scaling
+  const dragImage = event.target.cloneNode(true);
+  
+  // Style the drag image for better UX (like Linear, Notion, etc.)
+  dragImage.style.cssText = `
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+    width: ${event.target.offsetWidth}px;
+    height: ${event.target.offsetHeight}px;
+    transform: scale(0.95) rotate(3deg);
+    opacity: 0.9;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    background: white;
+  `;
+  
+  // Temporarily add to DOM
+  document.body.appendChild(dragImage);
+  
+  // Set the real card as drag image with slight offset for natural feel
+  const rect = event.target.getBoundingClientRect();
+  const offsetX = event.clientX - rect.left;
+  const offsetY = event.clientY - rect.top;
+  event.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+  
+  // Add dragging state to original card
   event.target.classList.add('dragging');
+  
+  // Clean up drag image after browser captures it
+  setTimeout(() => {
+    if (dragImage.parentNode) {
+      document.body.removeChild(dragImage);
+    }
+  }, 0);
 };
 
 const handleDragEnd = (event) => {
@@ -235,11 +272,15 @@ const assignConversation = () => {
   border: 1px solid var(--s-200);
   border-radius: var(--border-radius-large);
   padding: var(--space-large);
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.2s ease;
   position: relative;
   margin-bottom: var(--space-normal);
   overflow: hidden;
+  
+  &:active {
+    cursor: grabbing;
+  }
   
   &:hover {
     box-shadow: var(--shadow-large);
@@ -253,9 +294,12 @@ const assignConversation = () => {
   }
   
   &.dragging {
-    opacity: 0.6;
-    transform: rotate(5deg);
+    opacity: 0.3;
+    transform: scale(0.98) rotate(2deg);
     box-shadow: var(--shadow-large);
+    cursor: grabbing;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    z-index: 1;
   }
   
   &--unread {

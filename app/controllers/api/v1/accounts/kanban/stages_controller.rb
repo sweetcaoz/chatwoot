@@ -1,7 +1,7 @@
 class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::BaseController
   before_action :current_account
   before_action :ensure_kanban_enabled
-  before_action :fetch_stage, except: [:index, :create]
+  before_action :fetch_stage, except: [:index, :create, :reorder]
   before_action :check_authorization
 
   def index
@@ -31,21 +31,32 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::BaseContr
 
   def reorder
     board_key = params[:board_key] || KanbanStage::DEFAULT_BOARD_KEY
-    stages = Current.account.kanban_stages
-                    .for_board(board_key)
-                    .where(id: params[:stage_ids])
     
-    stages.each_with_index do |stage, index|
+    # Handle both nested and direct parameter formats
+    stage_ids = params[:stage_ids] || params.dig(:stage, :stage_ids)
+    
+    unless stage_ids.present?
+      render json: { error: 'stage_ids parameter is required' }, status: :bad_request
+      return
+    end
+    
+    # Update positions based on the order of IDs provided
+    stage_ids.each_with_index do |stage_id, index|
+      stage = Current.account.kanban_stages
+                     .for_board(board_key)
+                     .find(stage_id)
       stage.update!(position: index)
     end
     
     head :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'One or more stages not found' }, status: :not_found
   end
 
   private
 
   def check_authorization
-    authorize(Current.account)
+    authorize(Current.account, :kanban_stages?)
   end
 
   def pundit_user

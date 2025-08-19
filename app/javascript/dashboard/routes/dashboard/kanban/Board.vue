@@ -208,41 +208,12 @@ const handleDrop = async ({ conversationId, fromStage, toStage, position }) => {
   }
 };
 
-// ActionCable integration
+// ActionCable integration - Now handled by the main ActionCableConnector
 const setupKanbanSubscription = () => {
-  // Add kanban-specific events to the existing ActionCable events
-  const kanbanEvents = {
-    'kanban.stage.updated': (data) => {
-      store.dispatch('kanban/updateStageFromSocket', data);
-    },
-    'kanban.conversation.moved': (data) => {
-      store.dispatch('kanban/updateConversationPositionFromSocket', data);
-    },
-    'conversation.updated': (data) => {
-      // Update conversation in kanban view if it affects stage position
-      if (data.custom_attributes?.kanban_stage) {
-        store.dispatch('kanban/updateConversationFromSocket', data);
-      }
-    },
-    'conversation.created': (data) => {
-      // Add new conversation to appropriate stage
-      store.dispatch('kanban/addConversationFromSocket', data);
-    },
-    'assignee.changed': (data) => {
-      // Update assignee in kanban cards
-      store.dispatch('kanban/updateConversationFromSocket', data);
-    },
-    'conversation.status_changed': (data) => {
-      // Update status in kanban cards
-      store.dispatch('kanban/updateConversationFromSocket', data);
-    },
-  };
-  
-  // Register kanban events with the existing ActionCable connector
-  Object.entries(kanbanEvents).forEach(([eventName, handler]) => {
-    // This assumes the store has a method to register additional WebSocket events
-    store.dispatch('registerWebSocketEvent', { eventName, handler });
-  });
+  // Kanban WebSocket events are now automatically handled by the main ActionCableConnector
+  // which routes 'kanban.stage.updated' and 'kanban.conversation.moved' events
+  // to the appropriate store actions: kanban/updateStageFromSocket and kanban/updateConversationPositionFromSocket
+  console.log('Kanban WebSocket integration ready - using main ActionCable connector');
 };
 
 // Lifecycle

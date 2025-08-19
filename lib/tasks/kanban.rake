@@ -37,13 +37,8 @@ namespace :kanban do
       puts "✅ Migration completed"
     end
     
-    # Check NPM dependencies
-    package_json = JSON.parse(File.read(Rails.root.join('package.json')))
-    if package_json['dependencies']&.key?('vuedraggable')
-      puts "✅ NPM package 'vuedraggable' is installed"
-    else
-      puts "⚠️  NPM package missing. Please run: npm install vuedraggable@next"
-    end
+    # Check drag-and-drop support (HTML5 - built into browsers)
+    puts "✅ Drag & Drop support: Using native HTML5 (no NPM packages required)"
     
     # Check if feature flag exists in features.yml
     features = YAML.safe_load(File.read(Rails.root.join('config/features.yml')))

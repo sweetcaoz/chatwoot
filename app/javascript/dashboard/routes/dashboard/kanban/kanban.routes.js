@@ -9,7 +9,6 @@ export const routes = [
   {
     path: frontendURL('accounts/:accountId/kanban'),
     component: KanbanLayout,
-    name: 'kanban_layout',
     meta: {
       permissions: ['administrator', 'agent'],
       featureFlag: FEATURE_FLAGS.KANBAN,
@@ -17,6 +16,7 @@ export const routes = [
     children: [
       {
         path: '',
+        name: 'kanban_layout',
         redirect: 'board',
       },
       {

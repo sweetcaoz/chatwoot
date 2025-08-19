@@ -1,3 +1,30 @@
+# == Schema Information
+#
+# Table name: kanban_stages
+#
+#  id         :bigint           not null, primary key
+#  active     :boolean          default(TRUE), not null
+#  board_key  :string           default("sales"), not null
+#  color      :string
+#  icon       :string
+#  key        :string           not null
+#  name       :string           not null
+#  position   :integer          default(0), not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  account_id :bigint           not null
+#
+# Indexes
+#
+#  index_kanban_stages_active         (account_id,board_key,active)
+#  index_kanban_stages_on_account_id  (account_id)
+#  index_kanban_stages_position       (account_id,board_key,position)
+#  index_kanban_stages_unique_key     (account_id,board_key,key) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id) ON DELETE => cascade
+#
 class KanbanStage < ApplicationRecord
   belongs_to :account
 
